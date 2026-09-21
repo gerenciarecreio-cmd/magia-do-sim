@@ -12,6 +12,7 @@ const state = {
   role: 'client',
   weddings: [],
   clients: [],
+  suppliers: [],
   selectedWeddingId: null,
   wedding: null,
   vendors: [],
@@ -107,13 +108,15 @@ async function hydrateSession(session){
 }
 
 async function loadAdminData(){
-  const [{data:weddings,error:wErr},{data:clients,error:cErr}] = await Promise.all([
+  const [{data:weddings,error:wErr},{data:clients,error:cErr},{data:suppliers,error:sErr}] = await Promise.all([
     sb.from('weddings').select('*').order('wedding_date',{ascending:true}),
-    sb.from('profiles').select('id,full_name,role,email').eq('role','client').order('full_name',{ascending:true})
+    sb.from('profiles').select('id,full_name,role,email').eq('role','client').order('full_name',{ascending:true}),
+    sb.from('suppliers').select('*').order('category',{ascending:true}).order('name',{ascending:true})
   ]);
-  if(wErr) console.error(wErr); if(cErr) console.error(cErr);
+  if(wErr) console.error(wErr); if(cErr) console.error(cErr); if(sErr) console.error(sErr);
   state.weddings = weddings || [];
   state.clients = clients || [];
+  state.suppliers = suppliers || [];
   if(state.selectedWeddingId){
     const selected = state.weddings.find(w=>w.id===state.selectedWeddingId);
     if(selected){ state.wedding=selected; await loadWeddingData(selected.id); return; }
@@ -125,16 +128,44 @@ function resetWeddingCollections(){ state.vendors=[]; state.tasks=[]; state.meet
 
 async function loadWeddingData(weddingId){
   if(!weddingId){ resetWeddingCollections(); return; }
-  const [{data:vendors},{data:tasks},{data:meetings},{data:docs},{data:payments}] = await Promise.all([
+  const [{data:vendors,error:vErr},{data:tasks},{data:meetings},{data:docs},{data:payments}] = await Promise.all([
     sb.from('vendors').select('*').eq('wedding_id',weddingId).order('created_at',{ascending:true}),
     sb.from('tasks').select('*').eq('wedding_id',weddingId).order('due_date',{ascending:true}),
     sb.from('meetings').select('*').eq('wedding_id',weddingId).order('meeting_date',{ascending:true}),
     sb.from('documents').select('*').eq('wedding_id',weddingId).order('created_at',{ascending:false}),
     sb.from('payments').select('*').eq('wedding_id',weddingId).order('payment_date',{ascending:false})
   ]);
-  state.vendors=(vendors||[]).map(v=>({
-    id:v.id, category:v.category||'Fornecedor', name:v.name, status:v.status||'Pendente', phone:v.phone||'—', instagram:v.instagram||'—', site:v.website||'—', amount:Number(v.contract_value||0), paid:Number(v.paid_value||0), note:v.notes||'Sem observações.', contractDate:v.contract_date, dueDate:v.due_date
-  }));
+  if(vErr) console.error(vErr);
+  const vendorRows=vendors||[];
+  const supplierIds=[...new Set(vendorRows.map(v=>v.supplier_id).filter(Boolean))];
+  let supplierRows=state.role==='admin'
+    ? state.suppliers.filter(s=>supplierIds.includes(s.id))
+    : [];
+  if(state.role!=='admin' && supplierIds.length){
+    const {data:linkedSuppliers,error:sErr}=await sb.from('suppliers').select('*').in('id',supplierIds);
+    if(sErr) console.error(sErr);
+    supplierRows=linkedSuppliers||[];
+  }
+  const supplierMap=new Map(supplierRows.map(s=>[s.id,s]));
+  state.vendors=vendorRows.map(v=>{
+    const master=supplierMap.get(v.supplier_id);
+    return {
+      id:v.id,
+      masterSupplierId:v.supplier_id||null,
+      category:master?.category||v.category||'Fornecedor',
+      name:master?.name||v.name,
+      status:v.status||'Pendente',
+      phone:master?.phone||v.phone||'—',
+      instagram:master?.instagram||v.instagram||'—',
+      site:master?.website||v.website||'—',
+      contactName:master?.contact_name||'—',
+      amount:Number(v.contract_value||0),
+      paid:Number(v.paid_value||0),
+      note:v.notes||'Sem observações.',
+      contractDate:v.contract_date,
+      dueDate:v.due_date
+    };
+  });
   state.tasks=(tasks||[]).map(t=>({id:t.id,title:t.title,due:t.due_date?dateBR(t.due_date):'Sem prazo',dueISO:t.due_date||'',assignee:t.responsible||'Assessoria',status:t.status||'Pendente',done:!!t.completed}));
   state.meetings=(meetings||[]).map(m=>({id:m.id,title:m.title,date:m.meeting_date,time:m.meeting_time,people:m.participants||'—',notes:m.notes||'',link:m.meeting_link||'',type:m.meeting_link?'Online':'Presencial'}));
   state.docs=(docs||[]).map(d=>({id:d.id,name:d.name,type:d.document_type||'Outro',date:d.created_at?dateBR(d.created_at.slice(0,10)):'—',path:d.file_path||''}));
@@ -160,7 +191,7 @@ function render(){
   if(state.loading){ app.innerHTML=loadingView(); return; }
   if(!state.session){ app.innerHTML=loginView(); bindLogin(); return; }
   const r=route();
-  if(state.role!=='admin' && r==='admin'){ goto('dashboard'); return; }
+  if(state.role!=='admin' && (r==='admin'||r==='cadastros-gerais')){ goto('dashboard'); return; }
   app.innerHTML=shellView(r,viewFor(r)); bindGlobal(); bindView(r);
 }
 
@@ -198,7 +229,7 @@ function shellView(r,content){
       <div class="sidebar-brand"><div class="sidebar-logo"><img src="assets/logo-oficial.png" alt="A Magia do Sim"></div><div class="sidebar-name">A Magia<br>do Sim</div></div>
       <nav class="nav">${navItems.map(([k,l,i])=>`<a href="#/${k}" class="nav-item ${active===k?'active':''}">${icons[i]}<span>${l}</span></a>`).join('')}</nav>
       <div class="sidebar-bottom">
-        ${state.role==='admin'?`<a href="#/admin" class="nav-item ${active==='admin'?'active':''}">${icons.admin}<span>Painel admin</span></a>`:''}
+        ${state.role==='admin'?`<a href="#/cadastros-gerais" class="nav-item ${active==='cadastros-gerais'?'active':''}">${icons.users}<span>Cadastros gerais</span></a><a href="#/admin" class="nav-item ${active==='admin'?'active':''}">${icons.admin}<span>Painel admin</span></a>`:''}
         <a href="#/perfil" class="nav-item ${active==='perfil'?'active':''}">${icons.user}<span>Perfil</span></a>
         <button class="nav-item" id="logout" style="border:0;background:none;text-align:left;width:100%">${icons.logout}<span>Sair</span></button>
       </div>
@@ -222,6 +253,7 @@ function noWeddingView(){
 
 function viewFor(r){
   if(r==='admin' && state.role==='admin') return adminView();
+  if(r==='cadastros-gerais' && state.role==='admin') return generalRegistrationsView();
   if(r==='perfil') return profileView();
   if(!state.wedding) return noWeddingView();
   if(r==='dashboard') return dashboardView();
@@ -271,9 +303,9 @@ function weddingView(){
 
 function vendorsView(){
   const items=state.vendors.filter(v=>state.vendorFilter==='Todos'||v.status===state.vendorFilter);
-  return `<div class="page"><div class="page-head"><div><h1>Fornecedores</h1><p>Acompanhe todos os fornecedores do seu casamento.</p></div><button class="btn-primary" id="new-vendor">+ Novo fornecedor</button></div>
+  return `<div class="page"><div class="page-head"><div><h1>Fornecedores</h1><p>Acompanhe o andamento dos fornecedores deste casamento.</p></div>${state.role==='admin'?'<button class="btn-primary" id="new-vendor">+ Vincular fornecedor</button>':''}</div>
   <div class="filters">${['Todos','Contratado','Em negociação','Pendente','Em andamento'].map(f=>`<button class="filter-btn ${state.vendorFilter===f?'active':''}" data-vendor-filter="${f}">${f}</button>`).join('')}</div>
-  <div class="card list-card">${items.length?items.map(v=>`<a href="#/fornecedores/${v.id}" class="list-row vendor-row"><div class="thumb">${esc((v.category||'F')[0])}</div><div class="vendor-name"><strong>${esc(v.name)}</strong><span>${esc(v.category)}</span></div><div class="category">${esc(v.category)}</div><span class="badge ${statusClass(v.status)}">${esc(v.status)}</span>${icons.chevron}</a>`).join(''):emptyState('Ainda não há fornecedores neste filtro.','Adicione um fornecedor ou altere o filtro.')}</div></div>`;
+  <div class="card list-card">${items.length?items.map(v=>`<a href="#/fornecedores/${v.id}" class="list-row vendor-row"><div class="thumb">${esc((v.category||'F')[0])}</div><div class="vendor-name"><strong>${esc(v.name)}</strong><span>${esc(v.category)}</span></div><div class="category">${esc(v.category)}</div><span class="badge ${statusClass(v.status)}">${esc(v.status)}</span>${icons.chevron}</a>`).join(''):emptyState('Ainda não há fornecedores neste filtro.','A assessoria pode vincular um fornecedor do cadastro geral a este casamento.')}</div></div>`;
 }
 
 function vendorDetailView(id){
@@ -281,7 +313,7 @@ function vendorDetailView(id){
   const balance=v.amount-v.paid;
   return `<div class="page"><div class="page-head"><div><button class="link-btn" onclick="history.back()">← Voltar</button><h1 style="margin-top:8px">${esc(v.category)}</h1><p>${esc(v.name)}</p></div><span class="badge ${statusClass(v.status)}">${esc(v.status)}</span></div>
   <div class="supplier-detail">
-    <div class="card card-pad"><div class="supplier-profile"><div class="supplier-big-avatar">${esc((v.category||'F')[0])}</div><div><h2 class="serif" style="margin:0;color:var(--brown);font-weight:500">${esc(v.name)}</h2><span class="small muted">${esc(v.category)}</span></div></div><div class="contact-list"><div class="contact-item">☎ ${esc(v.phone)}</div><div class="contact-item">◎ ${esc(v.instagram)}</div><div class="contact-item">⌁ ${esc(v.site)}</div></div><div class="action-row"><button class="btn-secondary" id="edit-vendor">Editar fornecedor</button><button class="btn-secondary" id="add-note">Adicionar observação</button></div><div class="notes"><strong style="color:var(--brown)">Observações</strong><br>${esc(v.note)}</div></div>
+    <div class="card card-pad"><div class="supplier-profile"><div class="supplier-big-avatar">${esc((v.category||'F')[0])}</div><div><h2 class="serif" style="margin:0;color:var(--brown);font-weight:500">${esc(v.name)}</h2><span class="small muted">${esc(v.category)}</span></div></div><div class="contact-list"><div class="contact-item">☎ ${esc(v.phone)}</div><div class="contact-item">◎ ${esc(v.instagram)}</div><div class="contact-item">⌁ ${esc(v.site)}</div></div><div class="action-row"><button class="btn-secondary" id="edit-vendor">Editar andamento</button><button class="btn-secondary" id="add-note">Adicionar observação</button></div><div class="notes"><strong style="color:var(--brown)">Observações</strong><br>${esc(v.note)}</div></div>
     <div class="card card-pad"><div class="card-title"><h2>Informações do contrato</h2></div><div class="contract-lines"><div class="contract-line"><span>Valor contratado</span><strong>${brl(v.amount)}</strong></div><div class="contract-line"><span>Valor pago</span><strong>${brl(v.paid)} (${pct(v.paid,v.amount)}%)</strong></div><div class="contract-line"><span>Saldo</span><strong>${brl(balance)}</strong></div><div class="contract-line"><span>Data de contratação</span><strong>${dateBR(v.contractDate)}</strong></div><div class="contract-line"><span>Data limite</span><strong>${dateBR(v.dueDate)}</strong></div></div><div class="action-row"><button class="btn-secondary" id="view-contract">Ver contrato</button><button class="btn-primary" id="register-payment" data-vendor="${v.id}">Registrar pagamento</button></div></div>
   </div></div>`;
 }
@@ -318,6 +350,15 @@ function meetingsView(){
 
 function profileView(){
   return `<div class="page"><div class="page-head"><div><h1>Perfil</h1><p>Seus dados e preferências de acesso.</p></div></div><div class="grid grid-2"><div class="card card-pad"><div class="card-title"><h2>Dados pessoais</h2></div><div class="field"><label>Nome</label><input class="input" style="padding-left:13px" id="profile-name" value="${esc(state.profile?.full_name||'')}"></div><div class="field"><label>E-mail</label><input class="input" style="padding-left:13px" value="${esc(state.user?.email||state.profile?.email||'')}" disabled></div><button class="btn-primary" id="save-profile">Salvar nome</button></div><div class="card card-pad"><div class="card-title"><h2>${state.role==='admin'?'Acesso administrativo':'Seu casamento'}</h2></div><div class="contract-lines"><div class="contract-line"><span>Perfil</span><strong>${state.role==='admin'?'Administrador':'Cliente'}</strong></div><div class="contract-line"><span>Casamento</span><strong>${esc(state.wedding?.couple_name||'Ainda não vinculado')}</strong></div><div class="contract-line"><span>Assessoria</span><strong>A Magia do Sim</strong></div></div></div></div></div>`;
+}
+
+function generalRegistrationsView(){
+  const items=state.suppliers||[];
+  return `<div class="page">
+    <div class="page-head"><div><h1>Cadastros gerais</h1><p>Cadastre fornecedores uma única vez. Status, valores, pagamentos e observações continuam particulares de cada casamento.</p></div><button class="btn-primary" id="new-master-supplier">+ Novo fornecedor</button></div>
+    <div class="card card-pad" style="margin-bottom:18px"><strong style="color:var(--brown)">Como funciona</strong><p class="small muted" style="margin-bottom:0">Aqui ficam os dados gerais do fornecedor. Dentro de cada cliente você apenas vincula este cadastro e acompanha o andamento específico daquele casamento.</p></div>
+    <div class="card list-card">${items.length?items.map(s=>`<div class="list-row vendor-row"><div class="thumb">${esc((s.category||'F')[0])}</div><div class="vendor-name"><strong>${esc(s.name)}</strong><span>${esc(s.category||'Sem categoria')}</span></div><div class="category">${esc(s.phone||s.contact_name||'—')}</div><span class="badge ${s.active===false?'danger':'success'}">${s.active===false?'Inativo':'Ativo'}</span><button class="btn-secondary" data-edit-master-supplier="${s.id}">Editar</button></div>`).join(''):emptyState('Nenhum fornecedor geral cadastrado','Cadastre o primeiro fornecedor para depois vinculá-lo aos casamentos.')}</div>
+  </div>`;
 }
 
 function adminView(){
@@ -371,7 +412,7 @@ function bindLogin(){
 function bindGlobal(){
   const logout=document.getElementById('logout'); if(logout) logout.onclick=async()=>{await sb.auth.signOut();state.session=null;state.user=null;state.profile=null;state.wedding=null;resetWeddingCollections();location.hash='';render();};
   const bell=document.getElementById('bell'); if(bell) bell.onclick=()=>toast(`Você tem ${state.tasks.filter(t=>!t.done).length} pendência(s).`);
-  document.querySelectorAll('[data-mobile="menu"]').forEach(a=>a.onclick=e=>{e.preventDefault();modal('Mais opções',`<div class="grid">${navItems.slice(4).map(([k,l])=>`<a class="btn-secondary" href="#/${k}" onclick="document.querySelector('.modal-backdrop')?.remove()">${l}</a>`).join('')}<a class="btn-secondary" href="#/perfil" onclick="document.querySelector('.modal-backdrop')?.remove()">Perfil</a>${state.role==='admin'?'<a class="btn-secondary" href="#/admin" onclick="document.querySelector(\'.modal-backdrop\')?.remove()">Painel admin</a>':''}</div>`,'Fechar',()=>true);});
+  document.querySelectorAll('[data-mobile="menu"]').forEach(a=>a.onclick=e=>{e.preventDefault();modal('Mais opções',`<div class="grid">${navItems.slice(4).map(([k,l])=>`<a class="btn-secondary" href="#/${k}" onclick="document.querySelector('.modal-backdrop')?.remove()">${l}</a>`).join('')}<a class="btn-secondary" href="#/perfil" onclick="document.querySelector('.modal-backdrop')?.remove()">Perfil</a>${state.role==='admin'?'<a class="btn-secondary" href="#/cadastros-gerais" onclick="document.querySelector(\'.modal-backdrop\')?.remove()">Cadastros gerais</a><a class="btn-secondary" href="#/admin" onclick="document.querySelector(\'.modal-backdrop\')?.remove()">Painel admin</a>':''}</div>`,'Fechar',()=>true);});
 }
 
 async function refreshCurrentWedding(){
@@ -400,6 +441,8 @@ function bindView(r){
   document.querySelectorAll('[data-edit-task]').forEach(b=>b.onclick=()=>openTaskEditor(state.tasks.find(x=>x.id===b.dataset.editTask)));
   document.querySelectorAll('[data-view-doc]').forEach(b=>b.onclick=()=>{const d=state.docs.find(x=>x.id===b.dataset.viewDoc); if(d?.path) window.open(d.path,'_blank','noopener'); else toast('Este documento ainda não possui arquivo vinculado.');});
 
+  document.querySelectorAll('[data-edit-master-supplier]').forEach(b=>b.onclick=()=>openMasterSupplierEditor(state.suppliers.find(s=>s.id===b.dataset.editMasterSupplier)));
+  const nms=document.getElementById('new-master-supplier'); if(nms) nms.onclick=()=>openMasterSupplierEditor(null);
   const nc=document.getElementById('new-client'); if(nc) nc.onclick=()=>openClientEditor();
   const ncs=document.getElementById('new-client-side'); if(ncs) ncs.onclick=()=>openClientEditor();
   const nw=document.getElementById('new-wedding'); if(nw) nw.onclick=()=>openWeddingEditor(null);
@@ -519,16 +562,86 @@ function openWeddingEditor(w){
   });
 }
 
-function openVendorEditor(v){
-  const body=field('Categoria','category',v?.category||'')+field('Nome do fornecedor','name',v?.name||'')+selectField('Status','status',['Pendente','Em negociação','Em andamento','Contratado'],v?.status||'Pendente')+
-    field('Telefone','phone',v?.phone==='—'?'':v?.phone||'')+field('Instagram','instagram',v?.instagram==='—'?'':v?.instagram||'')+field('Site','website',v?.site==='—'?'':v?.site||'')+
-    field('Valor contratado','contract_value',v?.amount||0,'number','step="0.01"')+field('Valor pago','paid_value',v?.paid||0,'number','step="0.01"')+field('Data da contratação','contract_date',v?.contractDate||'','date')+field('Data limite','due_date',v?.dueDate||'','date');
-  modal(v?'Editar fornecedor':'Novo fornecedor',body,v?'Salvar':'Adicionar',async back=>{
+function openMasterSupplierEditor(s){
+  const body=
+    field('Nome do fornecedor','name',s?.name||'')+
+    field('Categoria','category',s?.category||'')+
+    field('Contato responsável','contact_name',s?.contact_name||'')+
+    field('Telefone','phone',s?.phone||'')+
+    field('Instagram','instagram',s?.instagram||'')+
+    field('Site','website',s?.website||'','url')+
+    field('Observações gerais','notes',s?.notes||'')+
+    selectField('Situação do cadastro','active',[{value:'true',label:'Ativo'},{value:'false',label:'Inativo'}],String(s?.active!==false));
+  modal(s?'Editar fornecedor geral':'Novo fornecedor geral',body,s?'Salvar':'Cadastrar',async back=>{
     const f=Object.fromEntries(new FormData(back.querySelector('.modal')).entries());
-    const payload={wedding_id:state.wedding.id,category:f.category,name:f.name,status:f.status,phone:f.phone||null,instagram:f.instagram||null,website:f.website||null,contract_value:Number(f.contract_value||0),paid_value:Number(f.paid_value||0),contract_date:f.contract_date||null,due_date:f.due_date||null};
+    const payload={
+      name:String(f.name||'').trim(),
+      category:String(f.category||'').trim()||null,
+      contact_name:String(f.contact_name||'').trim()||null,
+      phone:String(f.phone||'').trim()||null,
+      instagram:String(f.instagram||'').trim()||null,
+      website:String(f.website||'').trim()||null,
+      notes:String(f.notes||'').trim()||null,
+      active:f.active==='true'
+    };
     if(!payload.name){toast('Informe o nome do fornecedor.');return false;}
-    const res=v?await sb.from('vendors').update(payload).eq('id',v.id):await sb.from('vendors').insert(payload);
-    if(res.error){console.error(res.error);toast('Não foi possível salvar o fornecedor.');return false;} await loadWeddingData(state.wedding.id);toast('Fornecedor salvo.');render();return true;
+    const res=s
+      ? await sb.from('suppliers').update(payload).eq('id',s.id)
+      : await sb.from('suppliers').insert(payload);
+    if(res.error){console.error(res.error);toast('Não foi possível salvar o cadastro geral.');return false;}
+    await loadAdminData();
+    toast('Cadastro geral salvo.');
+    render();
+    return true;
+  });
+}
+
+function openVendorEditor(v){
+  const supplierOptions=[{value:'',label:'Selecione um fornecedor do cadastro geral'}].concat(
+    (state.suppliers||[]).filter(s=>s.active!==false || s.id===v?.masterSupplierId).map(s=>({
+      value:s.id,
+      label:`${s.category||'Fornecedor'} — ${s.name}`
+    }))
+  );
+  const supplierControl=state.role==='admin'
+    ? selectField('Fornecedor do cadastro geral','supplier_id',supplierOptions,v?.masterSupplierId||'')
+    : `<div class="field"><label>Fornecedor</label><input class="input" style="padding-left:13px" value="${esc(v?.name||'')}" disabled></div>`;
+  const body=supplierControl+
+    selectField('Status deste casamento','status',['Pendente','Em negociação','Em andamento','Contratado'],v?.status||'Pendente')+
+    field('Valor contratado','contract_value',v?.amount||0,'number','step="0.01"')+
+    field('Valor pago','paid_value',v?.paid||0,'number','step="0.01"')+
+    field('Data da contratação','contract_date',v?.contractDate||'','date')+
+    field('Data limite','due_date',v?.dueDate||'','date');
+  modal(v?'Editar andamento do fornecedor':'Vincular fornecedor ao casamento',body,v?'Salvar andamento':'Vincular',async back=>{
+    const f=Object.fromEntries(new FormData(back.querySelector('.modal')).entries());
+    let master=null;
+    if(state.role==='admin'){
+      if(!f.supplier_id){toast('Selecione um fornecedor do cadastro geral.');return false;}
+      master=state.suppliers.find(s=>s.id===f.supplier_id);
+      if(!master){toast('Fornecedor geral não encontrado.');return false;}
+    }
+    const payload={
+      wedding_id:state.wedding.id,
+      supplier_id:state.role==='admin'?(f.supplier_id||null):(v?.masterSupplierId||null),
+      category:master?.category||v?.category||'Fornecedor',
+      name:master?.name||v?.name||'Fornecedor',
+      phone:master?.phone||((v?.phone&&v.phone!=='—')?v.phone:null),
+      instagram:master?.instagram||((v?.instagram&&v.instagram!=='—')?v.instagram:null),
+      website:master?.website||((v?.site&&v.site!=='—')?v.site:null),
+      status:f.status,
+      contract_value:Number(f.contract_value||0),
+      paid_value:Number(f.paid_value||0),
+      contract_date:f.contract_date||null,
+      due_date:f.due_date||null
+    };
+    const res=v
+      ? await sb.from('vendors').update(payload).eq('id',v.id)
+      : await sb.from('vendors').insert(payload);
+    if(res.error){console.error(res.error);toast('Não foi possível salvar o andamento do fornecedor.');return false;}
+    await loadWeddingData(state.wedding.id);
+    toast(v?'Andamento atualizado.':'Fornecedor vinculado ao casamento.');
+    render();
+    return true;
   });
 }
 
