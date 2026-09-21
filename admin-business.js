@@ -955,3 +955,39 @@ window.addEventListener('hashchange',async ()=>{
     render();
   }
 });
+
+
+/* Controles rápidos de navegação vertical no ADMIN */
+const businessShellWithScrollControls = shellView;
+shellView = function(r,content){
+  let html = businessShellWithScrollControls(r,content);
+  if(state.role !== 'admin') return html;
+
+  const controls = `
+    <div class="admin-scroll-controls" aria-label="Atalhos de rolagem">
+      <button type="button" id="scroll-page-up" class="admin-scroll-btn" title="Subir para o início" aria-label="Subir para o início">↑</button>
+      <button type="button" id="scroll-page-down" class="admin-scroll-btn" title="Descer para o final" aria-label="Descer para o final">↓</button>
+    </div>
+  `;
+
+  return html.replace('</main>', controls + '</main>');
+};
+
+const businessBindViewWithScrollControls = bindView;
+bindView = function(r){
+  businessBindViewWithScrollControls(r);
+
+  const up = document.getElementById('scroll-page-up');
+  const down = document.getElementById('scroll-page-down');
+
+  if(up){
+    up.onclick = ()=>window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  if(down){
+    down.onclick = ()=>window.scrollTo({
+      top:Math.max(document.documentElement.scrollHeight,document.body.scrollHeight),
+      behavior:'smooth'
+    });
+  }
+};
