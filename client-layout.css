@@ -1,0 +1,469 @@
+
+/* A Magia do Sim — nova experiência visual do cliente */
+.client-shell{
+  --client-olive:#4b4e2f;
+  --client-olive-dark:#3f4228;
+  --client-cream:#f6efe5;
+  --client-paper:#fffaf3;
+  --client-line:#e8dccb;
+  --client-gold:#b99458;
+  --client-brown:#6a452f;
+  grid-template-columns:184px minmax(0,1fr);
+  background:
+    radial-gradient(circle at 85% 4%,rgba(184,148,89,.08),transparent 24%),
+    linear-gradient(180deg,#f8f2e9,#f5eee4);
+}
+.client-shell .sidebar{
+  background:linear-gradient(180deg,var(--client-olive),var(--client-olive-dark));
+  padding:16px 12px;
+  box-shadow:8px 0 30px rgba(57,52,35,.06);
+}
+.client-shell .sidebar-brand{
+  display:grid;
+  justify-items:center;
+  text-align:center;
+  gap:8px;
+  padding:4px 4px 18px;
+  margin-bottom:10px;
+}
+.client-shell .sidebar-logo{
+  width:60px;
+  height:60px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+}
+.client-shell .sidebar-name{
+  font-size:17px;
+  line-height:1.05;
+  color:#fff7e9;
+}
+.client-shell .nav{
+  gap:3px;
+}
+.client-shell .nav-item{
+  border-radius:8px;
+  padding:10px 10px;
+  font-size:11px;
+  color:rgba(255,248,235,.82);
+}
+.client-shell .nav-item svg{
+  width:16px;
+  height:16px;
+}
+.client-shell .nav-item.active{
+  color:#fff9ef;
+  background:rgba(186,153,91,.24);
+  box-shadow:inset 3px 0 0 var(--client-gold);
+}
+.client-shell .sidebar-bottom{
+  border-top-color:rgba(255,255,255,.1);
+}
+.client-shell .main{
+  background:transparent;
+}
+.client-shell .topbar{
+  height:58px;
+  padding:0 24px;
+  background:rgba(249,244,236,.92);
+  border-bottom:1px solid rgba(103,73,50,.1);
+  box-shadow:0 4px 18px rgba(69,54,37,.025);
+}
+.client-shell .topbar-label{
+  color:#8c806f;
+}
+.client-shell .profile-chip{
+  color:#4b4238;
+  text-decoration:none;
+  padding:4px 6px;
+}
+.client-shell .profile-chip:hover{
+  background:rgba(231,218,197,.45);
+}
+.client-shell .avatar{
+  width:32px;
+  height:32px;
+  border:1px solid rgba(102,77,53,.12);
+  background:#efe3d3;
+}
+.client-shell .avatar-photo{
+  overflow:hidden;
+}
+.client-shell .avatar-photo img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.client-shell .page{
+  max-width:1240px;
+  padding:18px 22px 90px;
+}
+.client-shell .page-head{
+  margin-bottom:16px;
+}
+.client-shell .page-head h1{
+  font-size:27px;
+  color:#6b452e;
+}
+.client-shell .page-head p{
+  font-size:11px;
+}
+.client-shell .card{
+  border-radius:11px;
+  border:1px solid rgba(125,95,64,.13);
+  background:rgba(255,250,243,.88);
+  box-shadow:0 7px 24px rgba(74,59,42,.045);
+}
+.client-shell .card-pad{
+  padding:16px;
+}
+.client-shell .card-title h2,
+.client-shell .card-title h3{
+  font-size:15px;
+  color:#62422f;
+}
+.client-shell .btn-primary{
+  border-radius:8px;
+  background:linear-gradient(180deg,#5a5d37,#484c2d);
+  box-shadow:none;
+}
+.client-shell .btn-secondary{
+  border-radius:8px;
+  background:#fffaf3;
+}
+.client-shell .filter-btn{
+  border-radius:999px;
+  padding:6px 12px;
+  font-size:9px;
+}
+.client-shell .list-card{
+  border-radius:10px;
+}
+.client-shell .list-row{
+  padding:11px 12px;
+}
+.client-shell .thumb{
+  width:40px;
+  height:40px;
+}
+.client-shell .badge{
+  font-size:8px;
+}
+
+/* Dashboard inspirado no layout editorial enviado pelo usuário */
+.client-dashboard{
+  padding-top:14px !important;
+}
+.client-hero{
+  min-height:190px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 220px;
+  gap:18px;
+  align-items:center;
+  padding:26px 28px;
+  margin-bottom:12px;
+  overflow:hidden;
+  position:relative;
+  color:#fff9ee;
+  background:
+    radial-gradient(circle at 82% 14%,rgba(255,245,224,.38),transparent 13%),
+    radial-gradient(circle at 89% 43%,rgba(217,193,153,.22),transparent 17%),
+    linear-gradient(108deg,#594a31 0%,#575939 55%,#3f4328 100%);
+}
+.client-hero::before,
+.client-hero::after{
+  content:"";
+  position:absolute;
+  border:1px solid rgba(238,218,181,.24);
+  border-radius:50% 5% 50% 5%;
+  transform:rotate(-28deg);
+}
+.client-hero::before{
+  width:240px;
+  height:80px;
+  right:180px;
+  top:22px;
+}
+.client-hero::after{
+  width:160px;
+  height:58px;
+  right:110px;
+  bottom:16px;
+  transform:rotate(31deg);
+}
+.client-hero-copy,
+.client-hero-countdown{
+  position:relative;
+  z-index:2;
+}
+.client-hero-kicker{
+  display:inline-block;
+  font-size:8px;
+  letter-spacing:.22em;
+  color:#dcc697;
+  margin-bottom:10px;
+}
+.client-hero .hero-title{
+  font-size:30px;
+  color:#fff9ef;
+}
+.client-hero .hero-sub{
+  max-width:560px;
+  font-size:11px;
+}
+.client-hero .date{
+  margin-top:15px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.08);
+}
+.client-hero-countdown{
+  justify-self:end;
+  width:100%;
+  max-width:210px;
+  min-height:126px;
+  border-radius:10px;
+  padding:17px 18px;
+  background:rgba(255,249,239,.94);
+  color:#64432d;
+  border:1px solid rgba(255,255,255,.35);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.client-hero-countdown .countdown-label{
+  font-size:13px;
+  color:#70523e;
+}
+.client-hero-countdown .countdown-number{
+  font-size:47px;
+  color:#714a31;
+}
+.client-hero-countdown .countdown-number.compact{
+  font-size:24px;
+  line-height:1.2;
+  margin-top:9px;
+}
+.client-hero-countdown .countdown-unit{
+  font-size:9px;
+}
+.client-shell .dashboard-main{
+  grid-template-columns:1.15fr .85fr;
+  gap:12px;
+  margin-bottom:12px;
+}
+.client-shell .summary-cards{
+  gap:12px;
+}
+.client-shell .kpi-card,
+.client-shell .inspiration{
+  min-height:132px;
+}
+.client-shell .planning-card .progress-track{
+  height:6px;
+}
+.client-shell .step-dot{
+  width:29px;
+  height:29px;
+}
+.client-shell .next-item{
+  border-radius:9px;
+  padding:9px;
+}
+.client-shell .next-num{
+  width:34px;
+  height:34px;
+}
+
+/* Meu casamento + foto */
+.client-wedding-hero{
+  display:grid;
+  grid-template-columns:190px minmax(0,1fr);
+  gap:22px;
+  align-items:stretch;
+  padding:18px;
+}
+.couple-photo-card{
+  min-height:250px;
+  border-radius:10px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 40% 30%,rgba(201,173,126,.2),transparent 20%),
+    linear-gradient(145deg,#eee2d2,#d9c8ae);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  color:#73523b;
+}
+.couple-photo-card img{
+  width:100%;
+  height:100%;
+  min-height:250px;
+  object-fit:cover;
+}
+.couple-photo-empty{
+  flex-direction:column;
+  gap:8px;
+  border:1px dashed rgba(112,83,59,.28);
+}
+.couple-photo-empty span{
+  font-family:"Playfair Display",serif;
+  font-size:42px;
+}
+.couple-photo-empty small{
+  font-size:10px;
+}
+.client-wedding-info{
+  min-width:0;
+  padding:8px 4px;
+}
+
+/* Perfil do casal */
+.profile-layout{
+  display:grid;
+  grid-template-columns:.85fr 1fr 1fr;
+  gap:14px;
+  align-items:start;
+}
+.couple-profile-card{
+  text-align:center;
+}
+.couple-profile-preview{
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  margin:6px auto 14px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:linear-gradient(145deg,#ece0cf,#d8c7aa);
+  border:4px solid #fff9ef;
+  box-shadow:0 9px 24px rgba(75,58,38,.12);
+}
+.couple-profile-preview span{
+  font-family:"Playfair Display",serif;
+  font-size:48px;
+  color:#75543d;
+}
+.couple-profile-preview img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.couple-profile-card .field{
+  text-align:left;
+}
+
+/* Refinamentos das telas internas do cliente */
+.client-shell .vendor-row{
+  grid-template-columns:42px minmax(0,1.6fr) minmax(110px,.7fr) 128px 20px;
+}
+.client-shell .detail-hero,
+.client-shell .finance-summary,
+.client-shell .meeting-card{
+  background:rgba(255,250,243,.9);
+}
+.client-shell .doc-icon{
+  background:#efe5d7;
+}
+.client-shell .payment-row{
+  font-size:11px;
+}
+.client-shell .inspiration{
+  background:
+    radial-gradient(circle at 24% 28%,rgba(194,158,101,.16),transparent 20%),
+    linear-gradient(145deg,#eadfce,#f8f1e8);
+}
+
+/* Desktop grande */
+@media (min-width:1280px){
+  .client-shell{
+    grid-template-columns:178px minmax(0,1fr);
+  }
+}
+
+/* Tablet */
+@media (max-width:980px){
+  .client-shell{
+    grid-template-columns:150px minmax(0,1fr);
+  }
+  .client-shell .sidebar{
+    padding-left:8px;
+    padding-right:8px;
+  }
+  .client-shell .sidebar-name{
+    font-size:14px;
+  }
+  .client-hero{
+    grid-template-columns:1fr 190px;
+  }
+  .client-shell .summary-cards{
+    grid-template-columns:repeat(2,1fr);
+  }
+  .profile-layout{
+    grid-template-columns:1fr 1fr;
+  }
+  .couple-profile-card{
+    grid-row:span 2;
+  }
+}
+
+/* Mobile: mantém o menu inferior, aproximando da referência enviada */
+@media (max-width:760px){
+  .client-shell{
+    display:block;
+  }
+  .client-shell .sidebar{
+    display:none;
+  }
+  .client-shell .topbar{
+    height:56px;
+    padding:0 14px;
+  }
+  .client-shell .topbar-label{
+    display:none;
+  }
+  .client-shell .page{
+    padding:14px 12px 86px;
+  }
+  .client-shell .mobile-nav{
+    background:rgba(67,70,42,.98);
+    border-top-color:rgba(255,255,255,.1);
+  }
+  .client-shell .mobile-nav a{
+    color:#fff9ee;
+  }
+  .client-hero{
+    min-height:0;
+    grid-template-columns:1fr;
+    padding:20px;
+  }
+  .client-hero .hero-title{
+    font-size:25px;
+  }
+  .client-hero-countdown{
+    justify-self:stretch;
+    max-width:none;
+    min-height:98px;
+  }
+  .client-shell .dashboard-main,
+  .client-shell .summary-cards{
+    grid-template-columns:1fr;
+  }
+  .client-wedding-hero{
+    grid-template-columns:1fr;
+  }
+  .couple-photo-card,
+  .couple-photo-card img{
+    min-height:220px;
+    max-height:300px;
+  }
+  .profile-layout{
+    grid-template-columns:1fr;
+  }
+  .couple-profile-card{
+    grid-row:auto;
+  }
+  .client-shell .vendor-row{
+    grid-template-columns:40px minmax(0,1fr) 20px;
+  }
+}
