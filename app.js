@@ -324,8 +324,8 @@ function adminView(){
   const totalVendors=state.wedding?state.vendors.length:'—';
   return `<div class="page"><div class="card admin-banner"><h1>Olá, ${esc(state.profile?.full_name||'Assessoria')}.</h1><p>Gerencie os casamentos cadastrados na A Magia do Sim.</p></div>
   <div class="admin-kpis"><div class="card admin-kpi"><span>Casamentos ativos</span><strong>${state.weddings.length}</strong></div><div class="card admin-kpi"><span>Clientes cadastrados</span><strong>${state.clients.length}</strong></div><div class="card admin-kpi"><span>Fornecedor do casamento aberto</span><strong>${totalVendors}</strong></div><div class="card admin-kpi"><span>Casamento em edição</span><strong style="font-size:18px">${esc(state.wedding?.couple_name||'Nenhum')}</strong></div></div>
-  <div class="grid grid-2"><div class="card card-pad"><div class="card-title"><h2>Casamentos</h2><button class="btn-primary" id="new-wedding">+ Criar casamento</button></div><div class="wedding-cards">${state.weddings.length?state.weddings.map(w=>`<div class="card wedding-card"><h3>${esc(w.couple_name)}</h3><p>${dateBR(w.wedding_date)} • ${esc(w.venue||'Local a definir')}</p><div class="action-row"><button class="btn-primary" data-open-wedding="${w.id}">Gerenciar</button><button class="btn-secondary" data-edit-admin-wedding="${w.id}">Editar</button></div></div>`).join(''):emptyState('Nenhum casamento cadastrado','Crie o primeiro casamento e vincule a um cliente.')}</div></div>
-  <div class="card card-pad"><div class="card-title"><h2>Clientes disponíveis</h2></div><p class="small muted">Os usuários são criados em Supabase → Authentication → Users. Depois aparecem aqui para serem vinculados ao casamento.</p><div class="contract-lines">${state.clients.length?state.clients.map(c=>`<div class="contract-line"><span>${esc(c.full_name||'Cliente')}</span><strong>${esc(c.email||'e-mail não registrado')}</strong></div>`).join(''):'<div class="muted">Nenhum cliente cadastrado.</div>'}</div></div></div></div>`;
+  <div class="grid grid-2"><div class="card card-pad"><div class="card-title"><h2>Casamentos</h2><div class="action-row"><button class="btn-primary" id="new-client">+ Novo cliente</button><button class="btn-secondary" id="new-wedding">+ Vincular casamento</button></div></div><div class="wedding-cards">${state.weddings.length?state.weddings.map(w=>`<div class="card wedding-card"><h3>${esc(w.couple_name)}</h3><p>${dateBR(w.wedding_date)} • ${esc(w.venue||'Local a definir')}</p><div class="action-row"><button class="btn-primary" data-open-wedding="${w.id}">Gerenciar</button><button class="btn-secondary" data-edit-admin-wedding="${w.id}">Editar</button></div></div>`).join(''):emptyState('Nenhum casamento cadastrado','Cadastre o primeiro cliente e casamento pelo botão Novo cliente.')}</div></div>
+  <div class="card card-pad"><div class="card-title"><h2>Clientes cadastrados</h2><button class="btn-secondary" id="new-client-side">+ Novo cliente</button></div><p class="small muted">O cadastro cria o login no Supabase e já vincula o cliente ao casamento. Cada cliente acessa somente a própria área.</p><div class="contract-lines">${state.clients.length?state.clients.map(c=>`<div class="contract-line"><span>${esc(c.full_name||'Cliente')}</span><strong>${esc(c.email||'e-mail não registrado')}</strong></div>`).join(''):'<div class="muted">Nenhum cliente cadastrado.</div>'}</div></div></div></div>`;
 }
 
 function modal(title,body,saveText='Salvar',onSave){
@@ -398,6 +398,8 @@ function bindView(r){
   document.querySelectorAll('[data-edit-task]').forEach(b=>b.onclick=()=>openTaskEditor(state.tasks.find(x=>x.id===b.dataset.editTask)));
   document.querySelectorAll('[data-view-doc]').forEach(b=>b.onclick=()=>{const d=state.docs.find(x=>x.id===b.dataset.viewDoc); if(d?.path) window.open(d.path,'_blank','noopener'); else toast('Este documento ainda não possui arquivo vinculado.');});
 
+  const nc=document.getElementById('new-client'); if(nc) nc.onclick=()=>openClientEditor();
+  const ncs=document.getElementById('new-client-side'); if(ncs) ncs.onclick=()=>openClientEditor();
   const nw=document.getElementById('new-wedding'); if(nw) nw.onclick=()=>openWeddingEditor(null);
   const nv=document.getElementById('new-vendor'); if(nv) nv.onclick=()=>openVendorEditor(null);
   const nt=document.getElementById('new-task'); if(nt) nt.onclick=()=>openTaskEditor(null);
@@ -410,6 +412,78 @@ function bindView(r){
   const rp=document.getElementById('register-payment'); if(rp) rp.onclick=()=>openPaymentEditor(rp.dataset.vendor||null);
   const np=document.getElementById('new-payment'); if(np) np.onclick=()=>openPaymentEditor(null);
   const sp=document.getElementById('save-profile'); if(sp) sp.onclick=saveProfile;
+}
+
+function openClientEditor(){
+  const body =
+    '<div class="demo-box" style="margin-bottom:14px">Este cadastro cria o login do cliente e o casamento ao mesmo tempo. Use uma senha provisória de pelo menos 8 caracteres e oriente o cliente a alterá-la depois.</div>'+
+    field('Nome do cliente','full_name','')+
+    field('E-mail de acesso','email','','email','autocomplete="off"')+
+    field('Senha provisória','password','','password','minlength="8" autocomplete="new-password"')+
+    field('Nome dos noivos','couple_name','')+
+    field('Nome 1','partner1_name','')+
+    field('Nome 2','partner2_name','')+
+    field('Data','wedding_date','','date')+
+    field('Horário','wedding_time','','time')+
+    field('Local','venue','')+
+    field('Número de convidados','guests',0,'number')+
+    field('Tipo de cerimônia','ceremony_type','')+
+    field('Tipo de recepção','reception_type','');
+
+  modal('Novo cliente + casamento',body,'Criar acesso',async back=>{
+    const f=Object.fromEntries(new FormData(back.querySelector('.modal')).entries());
+    if(!f.full_name || !f.email || !f.password || !f.couple_name){
+      toast('Preencha nome, e-mail, senha provisória e nome dos noivos.');
+      return false;
+    }
+    if(String(f.password).length < 8){
+      toast('A senha provisória precisa ter pelo menos 8 caracteres.');
+      return false;
+    }
+
+    const payload={
+      full_name:String(f.full_name).trim(),
+      email:String(f.email).trim().toLowerCase(),
+      password:String(f.password),
+      couple_name:String(f.couple_name).trim(),
+      partner1_name:String(f.partner1_name||'').trim(),
+      partner2_name:String(f.partner2_name||'').trim(),
+      wedding_date:f.wedding_date||null,
+      wedding_time:f.wedding_time||null,
+      venue:String(f.venue||'').trim(),
+      guests:Number(f.guests||0),
+      ceremony_type:String(f.ceremony_type||'').trim(),
+      reception_type:String(f.reception_type||'').trim()
+    };
+
+    const { data, error } = await sb.functions.invoke('admin-create-client',{ body:payload });
+    if(error){
+      console.error(error);
+      let message='Não foi possível criar o cliente.';
+      try{
+        if(error.context){
+          const details=await error.context.json();
+          if(details?.error) message=details.error;
+        }
+      }catch(_){}
+      toast(message);
+      return false;
+    }
+    if(data?.error){
+      toast(data.error);
+      return false;
+    }
+
+    await loadAdminData();
+    if(data?.wedding?.id){
+      state.selectedWeddingId=data.wedding.id;
+      state.wedding=state.weddings.find(w=>w.id===data.wedding.id)||data.wedding;
+      if(state.wedding) await loadWeddingData(state.wedding.id);
+    }
+    toast('Cliente, login e casamento criados com sucesso.');
+    render();
+    return true;
+  });
 }
 
 function openWeddingEditor(w){
