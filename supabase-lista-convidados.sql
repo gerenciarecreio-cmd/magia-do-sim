@@ -214,7 +214,7 @@ declare
   item jsonb;
   guest_uuid uuid;
   guest_status text;
-  row_count integer;
+  affected_rows integer;
   updated_count integer := 0;
 begin
   select w.id
@@ -251,8 +251,8 @@ begin
       where wg.id = guest_uuid
         and wg.wedding_id = target_wedding_id;
 
-      get diagnostics row_count = row_count;
-      updated_count := updated_count + row_count;
+      get diagnostics affected_rows = row_count;
+      updated_count := updated_count + affected_rows;
     end if;
   end loop;
 
