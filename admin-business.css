@@ -412,3 +412,44 @@
   .event-upload{grid-template-columns:1fr}
   .admin-company-nav{padding-left:6px;padding-right:6px}
 }
+
+.admin-scroll-controls{
+  position:fixed;
+  right:20px;
+  bottom:22px;
+  z-index:95;
+  display:grid;
+  gap:8px;
+}
+.admin-scroll-btn{
+  width:42px;
+  height:42px;
+  border:1px solid rgba(76,80,48,.22);
+  border-radius:12px;
+  background:rgba(255,250,242,.96);
+  color:#4c5030;
+  font-size:22px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+  box-shadow:0 8px 22px rgba(47,42,31,.13);
+  transition:transform .15s ease, background .15s ease;
+}
+.admin-scroll-btn:hover{
+  transform:translateY(-1px);
+  background:#fff;
+}
+.admin-scroll-btn:focus-visible{
+  outline:3px solid rgba(181,145,72,.35);
+  outline-offset:2px;
+}
+@media (max-width:760px){
+  .admin-scroll-controls{
+    right:12px;
+    bottom:78px;
+  }
+  .admin-scroll-btn{
+    width:40px;
+    height:40px;
+  }
+}
