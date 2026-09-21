@@ -330,11 +330,13 @@ function adminView(){
 
 function modal(title,body,saveText='Salvar',onSave){
   const back=document.createElement('div'); back.className='modal-backdrop';
-  back.innerHTML=`<div class="modal"><div class="modal-head"><h3>${esc(title)}</h3><button class="icon-btn modal-close">${icons.close}</button></div>${body}<div class="modal-actions"><button class="btn-secondary modal-close">Cancelar</button><button class="btn-primary modal-save">${esc(saveText)}</button></div></div>`;
+  back.innerHTML=`<form class="modal"><div class="modal-head"><h3>${esc(title)}</h3><button type="button" class="icon-btn modal-close">${icons.close}</button></div>${body}<div class="modal-actions"><button type="button" class="btn-secondary modal-close">Cancelar</button><button type="button" class="btn-primary modal-save">${esc(saveText)}</button></div></form>`;
   document.body.appendChild(back);
+  const form=back.querySelector('.modal');
+  form.addEventListener('submit',e=>e.preventDefault());
   back.querySelectorAll('.modal-close').forEach(b=>b.onclick=()=>back.remove());
   back.addEventListener('click',e=>{if(e.target===back)back.remove()});
-  back.querySelector('.modal-save').onclick=async()=>{const btn=back.querySelector('.modal-save');const original=btn.textContent;btn.disabled=true;btn.textContent='Processando...';try{const ok=onSave?await onSave(back):true;if(ok!==false) back.remove();}catch(error){console.error(error);toast('Ocorreu um erro inesperado. Tente novamente.');}finally{btn.disabled=false;btn.textContent=original;}};
+  back.querySelector('.modal-save').onclick=async()=>{const btn=back.querySelector('.modal-save');const original=btn.textContent;btn.disabled=true;btn.textContent='Processando...';try{const ok=onSave?await onSave(back):true;if(ok!==false) back.remove();}catch(error){console.error(error);toast(error?.message ? `Erro: ${error.message}` : 'Ocorreu um erro inesperado. Tente novamente.');}finally{btn.disabled=false;btn.textContent=original;}};
   return back;
 }
 
