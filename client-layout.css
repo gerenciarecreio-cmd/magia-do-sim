@@ -467,3 +467,58 @@
     grid-template-columns:40px minmax(0,1fr) 20px;
   }
 }
+
+
+/* Correção de exibição do hero do cliente */
+.client-shell .client-hero{
+  min-height:210px;
+  height:auto;
+  align-content:center;
+  background:
+    radial-gradient(circle at 82% 14%,rgba(255,245,224,.22),transparent 13%),
+    radial-gradient(circle at 89% 43%,rgba(217,193,153,.16),transparent 17%),
+    linear-gradient(108deg,#594a31 0%,#575939 55%,#3f4328 100%);
+  color:#fff9ee;
+}
+.client-shell .client-hero .hero-title{
+  color:#fff9ef;
+}
+.client-shell .client-hero .hero-sub{
+  color:rgba(255,249,238,.82);
+}
+.client-shell .client-hero .date{
+  color:#fff9ef;
+}
+@media (max-width:820px){
+  .client-shell{
+    display:block;
+  }
+  .client-shell .sidebar{
+    display:none;
+  }
+  .client-shell .topbar{
+    height:56px;
+    padding:0 14px;
+  }
+  .client-shell .mobile-menu{
+    display:grid;
+  }
+  .client-shell .page{
+    padding:14px 12px 86px;
+  }
+  .client-shell .client-hero{
+    min-height:0;
+    grid-template-columns:1fr;
+    gap:14px;
+    padding:20px;
+  }
+  .client-shell .client-hero-countdown{
+    justify-self:stretch;
+    max-width:none;
+    min-height:96px;
+  }
+  .client-shell .dashboard-main,
+  .client-shell .summary-cards{
+    grid-template-columns:1fr;
+  }
+}
