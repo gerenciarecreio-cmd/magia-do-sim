@@ -1,70 +1,36 @@
 # A Magia do Sim — Área dos Noivos
 
-Protótipo funcional e responsivo da plataforma **A Magia do Sim**, criado a partir do briefing visual e funcional fornecido.
+Versão conectada ao Supabase, preparada para vários usuários.
 
-## O que está incluído
+## O que esta versão faz
 
-- Login da cliente e acesso demonstrativo da assessora
-- Dashboard com contagem regressiva dinâmica
-- Meu casamento
-- Fornecedores e detalhe do fornecedor
-- Checklist interativo com persistência em `localStorage`
-- Cronograma
-- Documentos
-- Financeiro
-- Reuniões
-- Perfil
-- Painel administrativo da assessora
-- Layout responsivo para desktop, tablet e celular
-- Modais, filtros, badges, barras de progresso e notificações
-- Identidade visual em creme, verde oliva, marrom e dourado
-- Logo oficial em `assets/logo-oficial.png`
+- Login real por e-mail e senha com Supabase Auth.
+- Sessão persistente.
+- Perfil `admin`: vê todos os casamentos e seleciona qual deseja gerenciar.
+- Perfil `client`: vê somente o casamento vinculado ao próprio usuário.
+- Casamentos, fornecedores, checklist, reuniões, documentos e financeiro usando o banco Supabase.
+- RLS continua protegendo os dados no banco.
+- Recuperação de senha por e-mail.
 
-## Como testar localmente
+## Antes de publicar
 
-Como o projeto é estático, não precisa instalar dependências.
+1. Abra o Supabase → SQL Editor.
+2. Execute o arquivo `supabase-multiusuario.sql` uma vez.
+3. Em Authentication → URL Configuration, configure o Site URL para:
+   `https://gerenciarecreio-cmd.github.io/magia-do-sim/`
+4. Adicione o mesmo endereço em Redirect URLs.
+5. No GitHub, substitua `index.html`, `app.js` e `README.md` e adicione `supabase-multiusuario.sql`.
 
-### Opção 1 — abrir direto
-Abra `index.html` no navegador.
+## Como cadastrar um novo cliente
 
-### Opção 2 — servidor local
-Se tiver Python instalado:
+1. Supabase → Authentication → Users → Add user.
+2. Crie e-mail e senha do cliente.
+3. O trigger cria automaticamente um perfil `client`.
+4. Entre no site com a conta administradora.
+5. Painel admin → Criar casamento → selecione o cliente → salve.
 
-```bash
-python -m http.server 8000
-```
+A partir daí, quando esse cliente fizer login, verá somente o casamento vinculado ao usuário dele.
 
-Depois acesse `http://localhost:8000`.
+## Observação sobre documentos
 
-## Login de demonstração
-
-Na tela de login, qualquer e-mail e senha válidos entram na área dos noivos.
-
-Para visualizar a área da assessora, clique em **Entrar como assessora**.
-
-## Subir no GitHub
-
-1. Crie um repositório novo no GitHub.
-2. Envie todos os arquivos e pastas deste projeto para a raiz do repositório.
-3. Faça o commit.
-4. Em **Settings > Pages**, selecione **Deploy from a branch**.
-5. Escolha a branch `main` e a pasta `/ (root)`.
-6. Salve. O GitHub Pages publicará o site.
-
-## Estrutura
-
-```text
-magia-do-sim/
-├── index.html
-├── styles.css
-├── app.js
-├── README.md
-├── .gitignore
-└── assets/
-    ├── logo-oficial.png
-    └── referencia-visual.png
-```
-
-## Observação sobre o backend
-
-Esta entrega é um protótipo de frontend funcional. Os dados são demonstrativos e ficam no navegador. Para uso real com múltiplos clientes, autenticação, upload de contratos e pagamentos, conecte o frontend a um backend como Supabase/Firebase ou a uma API própria.
+Nesta versão, o cadastro de documento aceita um link de arquivo. O upload direto de PDF/imagem pode ser habilitado depois com Supabase Storage.
