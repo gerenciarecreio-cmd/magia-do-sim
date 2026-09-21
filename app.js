@@ -334,7 +334,7 @@ function modal(title,body,saveText='Salvar',onSave){
   document.body.appendChild(back);
   back.querySelectorAll('.modal-close').forEach(b=>b.onclick=()=>back.remove());
   back.addEventListener('click',e=>{if(e.target===back)back.remove()});
-  back.querySelector('.modal-save').onclick=async()=>{const btn=back.querySelector('.modal-save');btn.disabled=true;try{const ok=onSave?await onSave(back):true;if(ok!==false) back.remove();}finally{btn.disabled=false;}};
+  back.querySelector('.modal-save').onclick=async()=>{const btn=back.querySelector('.modal-save');const original=btn.textContent;btn.disabled=true;btn.textContent='Processando...';try{const ok=onSave?await onSave(back):true;if(ok!==false) back.remove();}catch(error){console.error(error);toast('Ocorreu um erro inesperado. Tente novamente.');}finally{btn.disabled=false;btn.textContent=original;}};
   return back;
 }
 
@@ -456,21 +456,34 @@ function openClientEditor(){
       reception_type:String(f.reception_type||'').trim()
     };
 
-    const { data, error } = await sb.functions.invoke('admin-create-client',{ body:payload });
-    if(error){
-      console.error(error);
-      let message='Não foi possível criar o cliente.';
-      try{
-        if(error.context){
-          const details=await error.context.json();
-          if(details?.error) message=details.error;
-        }
-      }catch(_){}
-      toast(message);
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session?.access_token){
+      toast('Sua sessão expirou. Saia e entre novamente como administradora.');
       return false;
     }
-    if(data?.error){
-      toast(data.error);
+
+    let response;
+    let data;
+    try{
+      response = await fetch(`${SUPABASE_URL}/functions/v1/admin-create-client`,{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'apikey':SUPABASE_PUBLISHABLE_KEY,
+          'Authorization':`Bearer ${session.access_token}`
+        },
+        body:JSON.stringify(payload)
+      });
+      data = await response.json().catch(()=>({}));
+    }catch(error){
+      console.error(error);
+      toast('Não foi possível conectar ao Supabase. Verifique sua internet e tente novamente.');
+      return false;
+    }
+
+    if(!response.ok || data?.error){
+      console.error('admin-create-client',response.status,data);
+      toast(data?.error || `Erro ao cadastrar cliente (código ${response.status}).`);
       return false;
     }
 
