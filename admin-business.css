@@ -453,3 +453,35 @@
     height:40px;
   }
 }
+
+/* Permite rolar o menu lateral quando houver mais abas do que a altura da tela */
+.sidebar{
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,255,255,.28) transparent;
+}
+.sidebar::-webkit-scrollbar{
+  width:6px;
+}
+.sidebar::-webkit-scrollbar-track{
+  background:transparent;
+}
+.sidebar::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.24);
+  border-radius:999px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover{
+  background:rgba(255,255,255,.36);
+}
+.sidebar-brand,
+.sidebar>.nav,
+.admin-company-nav,
+.sidebar-bottom{
+  flex:0 0 auto;
+}
+.sidebar-bottom{
+  margin-top:14px;
+  padding-bottom:16px;
+}
