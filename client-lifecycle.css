@@ -1,0 +1,128 @@
+
+.btn-danger{
+  border:1px solid rgba(154,70,63,.28);
+  background:#fff7f5;
+  color:#994740;
+  border-radius:12px;
+  padding:10px 14px;
+  font-weight:700;
+  font-size:12px;
+}
+.btn-danger:hover{
+  background:#f8e7e3;
+  border-color:#b96d65;
+}
+.lifecycle-admin-grid{
+  align-items:start;
+}
+.lifecycle-alert{
+  margin:14px 0;
+  padding:14px 16px;
+  background:linear-gradient(145deg,#fff7e7,#f7edda);
+  border-color:#ead7b3;
+}
+.lifecycle-alert>div{
+  display:grid;
+  gap:4px;
+}
+.lifecycle-alert strong{
+  color:#7a5c2e;
+  font-size:12px;
+}
+.lifecycle-alert span{
+  color:#8f7b61;
+  font-size:10px;
+}
+.lifecycle-wedding-card{
+  padding:15px;
+}
+.lifecycle-wedding-card.is-completed{
+  background:linear-gradient(145deg,rgba(240,238,231,.9),rgba(255,250,242,.9));
+}
+.lifecycle-card-top{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+.lifecycle-status-line{
+  margin-bottom:8px;
+}
+.lifecycle-card-actions{
+  margin-top:13px;
+  flex-wrap:wrap;
+}
+.lifecycle-card-actions button{
+  flex:0 0 auto;
+}
+.lifecycle-finish-btn{
+  border-color:#b79b62;
+  color:#775d2e;
+  background:#fffaf0;
+}
+.lifecycle-client-line{
+  align-items:center;
+}
+.lifecycle-client-line>span:first-child{
+  display:grid;
+  gap:3px;
+}
+.lifecycle-client-line>span:first-child>strong{
+  font-size:11px;
+  color:var(--ink);
+}
+.lifecycle-client-line small{
+  color:var(--muted);
+  font-size:9px;
+  font-weight:400;
+}
+.lifecycle-completed-section{
+  margin-top:14px;
+}
+.lifecycle-count{
+  min-width:30px;
+  height:30px;
+  padding:0 9px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:#eee4d5;
+  color:var(--brown);
+  font-size:11px;
+  font-weight:700;
+}
+.lifecycle-access-ended{
+  max-width:680px;
+  margin:30px auto;
+  text-align:center;
+  padding:36px 26px;
+}
+.lifecycle-access-ended h1{
+  font-family:"Playfair Display",serif;
+  color:var(--brown);
+  font-weight:500;
+}
+.lifecycle-access-ended p{
+  color:var(--muted);
+  line-height:1.6;
+}
+@media(max-width:820px){
+  .lifecycle-admin-page .admin-kpis{
+    grid-template-columns:1fr 1fr;
+  }
+  .lifecycle-admin-grid{
+    grid-template-columns:1fr;
+  }
+  .lifecycle-card-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+  .lifecycle-card-actions button{
+    width:100%;
+    padding:9px 8px;
+    font-size:9px;
+  }
+  .lifecycle-client-line{
+    gap:8px;
+  }
+}
