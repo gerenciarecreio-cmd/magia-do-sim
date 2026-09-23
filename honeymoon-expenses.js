@@ -9,8 +9,19 @@ if(expensesNavIndex>=0){
   navItems[expensesNavIndex]=['outros-gastos','Outros Gastos','money'];
 }
 if(!navItems.some(([key])=>key==='lua-de-mel')){
-  const idx=navItems.findIndex(([key])=>key==='outros-gastos');
-  navItems.splice(idx>=0?idx+1:4,0,['lua-de-mel','Lua de mel','heart']);
+  navItems.push(['lua-de-mel','Lua de mel','heart']);
+}
+
+/* Mantém Outros Gastos e Lua de mel dentro do menu "Mais" no celular. */
+const expensesItem=navItems.find(item=>item[0]==='outros-gastos');
+const honeymoonItem=navItems.find(item=>item[0]==='lua-de-mel');
+if(expensesItem&&honeymoonItem){
+  for(const key of ['outros-gastos','lua-de-mel']){
+    const idx=navItems.findIndex(item=>item[0]===key);
+    if(idx>=0) navItems.splice(idx,1);
+  }
+  const timelineIndex=navItems.findIndex(item=>item[0]==='cronograma');
+  navItems.splice(timelineIndex>=0?timelineIndex+1:navItems.length,0,expensesItem,honeymoonItem);
 }
 
 const otherExpenseCategories=[
