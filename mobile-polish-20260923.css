@@ -487,3 +487,110 @@
     min-width:64px !important;
   }
 }
+
+
+/* Ajustes finos após validação visual em iPhone */
+@media(max-width:820px){
+  /* Corrige o Safari esticando os cards de "Próximos passos". */
+  .mobile-client-home .dashboard-main{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    height:auto !important;
+    min-height:0 !important;
+  }
+
+  .mobile-client-home .dashboard-main>.card{
+    width:100%;
+    height:auto !important;
+    min-height:0 !important;
+    align-self:stretch !important;
+  }
+
+  .mobile-client-home .next-list{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    align-content:flex-start !important;
+    height:auto !important;
+    min-height:0 !important;
+    gap:8px !important;
+  }
+
+  .mobile-client-home .next-item{
+    display:grid !important;
+    grid-template-columns:36px minmax(0,1fr) 16px !important;
+    align-items:center !important;
+    flex:0 0 auto !important;
+    width:100%;
+    height:auto !important;
+    min-height:56px !important;
+    max-height:none !important;
+    padding:10px !important;
+  }
+
+  .mobile-client-home .next-num{
+    width:34px;
+    height:34px;
+  }
+
+  /* Financeiro: ações e total geral ficam visualmente equilibrados. */
+  .wedding-finance-page .page-head .action-row #new-payment{
+    grid-column:1 / -1;
+  }
+
+  .wedding-finance-page .finance-totals-5 .total-spent-card{
+    grid-column:1 / -1;
+  }
+
+  .wedding-finance-page .finance-totals-5 .total-spent-card strong{
+    font-size:27px;
+  }
+
+  /* Fornecedor: mantém a exclusão visível sem ocupar uma coluna exagerada. */
+  .vendor-list-item{
+    grid-template-columns:minmax(0,1fr) 62px !important;
+  }
+
+  .vendor-delete-list-btn{
+    width:62px !important;
+    min-width:62px !important;
+    font-size:0 !important;
+    color:#9a4b45;
+    background:#fff9f7;
+  }
+
+  .vendor-delete-list-btn::after{
+    content:"Excluir";
+    font-size:8px;
+    font-weight:700;
+  }
+
+  /* Checklist um pouco mais compacto, sem perder área de toque. */
+  .client-app-shell .task-row{
+    min-height:78px !important;
+    padding-top:11px !important;
+    padding-bottom:11px !important;
+  }
+
+  /* O topo do conteúdo não cola no cabeçalho ao navegar entre telas. */
+  .client-app-shell .page:not(.mobile-client-home),
+  .admin-app-shell .page{
+    padding-top:18px;
+  }
+}
+
+@media(max-width:420px){
+  .wedding-finance-page .finance-totals-5 .total-spent-card{
+    grid-column:auto;
+  }
+
+  .vendor-list-item{
+    grid-template-columns:minmax(0,1fr) 58px !important;
+  }
+
+  .vendor-delete-list-btn{
+    width:58px !important;
+    min-width:58px !important;
+  }
+}
