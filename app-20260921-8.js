@@ -413,7 +413,7 @@ function bindLogin(){
   document.getElementById('forgot').onclick=async()=>{
     const email=document.getElementById('email').value.trim();
     if(!email){toast('Digite seu e-mail primeiro.');return;}
-    const redirectTo=location.origin+location.pathname;
+    const redirectTo='https://magiadosim.github.io/magia-do-sim/';
     const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
     toast(error?'Não foi possível enviar o e-mail.':'Enviamos um link de recuperação para seu e-mail.');
   };
