@@ -218,6 +218,7 @@ function loginView(){
         <button class="login-btn" id="login-submit" type="submit">Entrar</button>
         <div id="login-error" class="small" style="color:#9e3d2f;min-height:18px;margin-top:8px"></div>
         <div class="login-meta"><button class="link-btn" type="button" id="forgot">Esqueci minha senha</button><button class="link-btn" type="button" id="admin-login">Acesso da assessora</button></div>
+        <div id="forgot-countdown" class="password-reset-countdown" aria-live="polite"></div>
         <div class="demo-box">Acesso protegido pelo Supabase. Clientes entram apenas na própria área; a conta administradora acessa o painel de todos os casamentos.</div>
         <div class="brand-signoff">A Magia do Sim<br><span class="small">Onde os sonhos se tornam alianças.</span></div>
       </form>
@@ -398,6 +399,53 @@ function selectField(label,name,options,value=''){
   return `<div class="field"><label>${esc(label)}</label><select class="input" style="padding-left:13px" name="${esc(name)}">${options.map(o=>{const val=typeof o==='string'?o:o.value;const lab=typeof o==='string'?o:o.label;return `<option value="${esc(val)}" ${String(val)===String(value)?'selected':''}>${esc(lab)}</option>`}).join('')}</select></div>`;
 }
 
+const PASSWORD_RESET_COOLDOWN_KEY='magiaDoSimPasswordResetCooldownUntil';
+
+function passwordResetRemaining(){
+  const until=Number(localStorage.getItem(PASSWORD_RESET_COOLDOWN_KEY)||0);
+  return Math.max(0,Math.ceil((until-Date.now())/1000));
+}
+
+function passwordResetClock(seconds){
+  const s=Math.max(0,Number(seconds)||0);
+  const min=Math.floor(s/60);
+  const sec=s%60;
+  return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function setPasswordResetCooldown(seconds=60){
+  const safe=Math.min(Math.max(Number(seconds)||60,1),3600);
+  localStorage.setItem(PASSWORD_RESET_COOLDOWN_KEY,String(Date.now()+safe*1000));
+}
+
+function passwordResetRetrySeconds(error){
+  const raw=String(error?.message||error?.code||'');
+  const match=raw.match(/(\d+)\s*(?:seconds?|secs?|segundos?)/i);
+  return match?Math.min(Math.max(Number(match[1]),1),3600):60;
+}
+
+function updatePasswordResetCountdown(){
+  const btn=document.getElementById('forgot');
+  const info=document.getElementById('forgot-countdown');
+  if(!btn||!info) return;
+
+  const remaining=passwordResetRemaining();
+  if(remaining>0){
+    btn.disabled=true;
+    btn.textContent=`Reenviar em ${passwordResetClock(remaining)}`;
+    info.textContent=`Aguarde ${passwordResetClock(remaining)} para solicitar um novo link de recuperação.`;
+    info.classList.add('active');
+    setTimeout(updatePasswordResetCountdown,1000);
+    return;
+  }
+
+  localStorage.removeItem(PASSWORD_RESET_COOLDOWN_KEY);
+  btn.disabled=false;
+  btn.textContent='Esqueci minha senha';
+  info.textContent='';
+  info.classList.remove('active');
+}
+
 function bindLogin(){
   const form=document.getElementById('login-form');
   form.onsubmit=async e=>{
@@ -409,35 +457,63 @@ function bindLogin(){
     if(error){err.textContent='E-mail ou senha inválidos.';btn.disabled=false;btn.textContent='Entrar';return;}
     await hydrateSession(data.session); btn.disabled=false; btn.textContent='Entrar';
   };
+
+  updatePasswordResetCountdown();
+
   document.getElementById('admin-login').onclick=()=>{toast('A assessora entra pelo mesmo formulário usando o e-mail administrativo.');document.getElementById('email').focus();};
   document.getElementById('forgot').onclick=async()=>{
+    if(passwordResetRemaining()>0){
+      updatePasswordResetCountdown();
+      return;
+    }
+
     const email=document.getElementById('email').value.trim();
     if(!email){toast('Digite seu e-mail primeiro.');return;}
+
     const btn=document.getElementById('forgot');
-    const original=btn.textContent;
+    const info=document.getElementById('forgot-countdown');
     btn.disabled=true;
     btn.textContent='Enviando...';
+    if(info){
+      info.textContent='Solicitando seu link de recuperação...';
+      info.classList.add('active');
+    }
+
     try{
       const redirectTo='https://magiadosim.github.io/magia-do-sim/';
       const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+
       if(error){
         console.error('password-reset',error);
         const msg=String(error.message||error.code||'').toLowerCase();
-        if(error.status===429 || msg.includes('rate limit') || msg.includes('too many') || msg.includes('over_email_send_rate_limit')){
-          toast('O limite temporário de e-mails de recuperação foi atingido. Aguarde um pouco e tente novamente.');
+
+        if(error.status===429 || msg.includes('rate limit') || msg.includes('too many') || msg.includes('over_email_send_rate_limit') || msg.includes('security purposes')){
+          const seconds=passwordResetRetrySeconds(error);
+          setPasswordResetCooldown(seconds);
+          toast(`Aguarde ${passwordResetClock(seconds)} antes de tentar novamente.`);
+          updatePasswordResetCountdown();
           return;
         }
+
         if(msg.includes('redirect') || msg.includes('url')){
+          if(info) info.textContent='O endereço de recuperação ainda não está autorizado.';
           toast('O endereço de recuperação ainda não está autorizado no Supabase.');
           return;
         }
+
+        if(info) info.textContent='Não foi possível enviar agora. Você pode tentar novamente.';
         toast('Não foi possível enviar o e-mail de recuperação. Tente novamente em alguns minutos.');
         return;
       }
+
+      setPasswordResetCooldown(60);
       toast('Enviamos um link de recuperação para seu e-mail.');
+      updatePasswordResetCountdown();
     }finally{
-      btn.disabled=false;
-      btn.textContent=original;
+      if(passwordResetRemaining()===0){
+        btn.disabled=false;
+        btn.textContent='Esqueci minha senha';
+      }
     }
   };
 }
