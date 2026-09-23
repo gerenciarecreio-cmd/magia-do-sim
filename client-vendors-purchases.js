@@ -92,9 +92,6 @@ vendorsView=function(){
             <span class="badge ${statusClass(v.status)}">${esc(v.status)}</span>
             ${icons.chevron}
           </a>
-          ${state.role==='admin'||!v.masterSupplierId
-            ?`<button type="button" class="vendor-delete-list-btn" data-delete-vendor="${v.id}" title="Excluir fornecedor deste casamento">Excluir fornecedor</button>`
-            :''}
         </div>
       `).join(''):emptyState(
         'Ainda não há fornecedores neste filtro.',
