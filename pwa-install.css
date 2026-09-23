@@ -1,0 +1,45 @@
+.pwa-help{
+  display:grid;
+  gap:10px;
+  color:var(--ink);
+  font-size:12px;
+  line-height:1.55;
+}
+.pwa-help p{margin:0}
+.pwa-help ol{
+  margin:0;
+  padding-left:20px;
+  display:grid;
+  gap:8px;
+}
+.pwa-help-icon{
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  background:#e8e3d7;
+  color:var(--olive);
+  font-size:24px;
+}
+.mobile-more-install{
+  width:100%;
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:8px;
+  border:1px solid rgba(76,80,48,.18);
+  border-radius:13px;
+  background:#eef0e4;
+  color:#4c5030;
+  font-weight:700;
+}
+.mobile-more-install svg{
+  width:18px;
+  height:18px;
+}
+.mobile-more-install[hidden]{
+  display:none !important;
+}
