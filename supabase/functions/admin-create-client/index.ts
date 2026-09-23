@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const ALLOWED_ORIGINS = new Set([
+  'https://magiadosim.github.io',
   'https://gerenciarecreio-cmd.github.io',
   'http://localhost:5173',
   'http://localhost:3000',
@@ -8,7 +9,7 @@ const ALLOWED_ORIGINS = new Set([
 
 function corsHeaders(req: Request) {
   const origin = req.headers.get('origin') || ''
-  const allowOrigin = ALLOWED_ORIGINS.has(origin) ? origin : 'https://gerenciarecreio-cmd.github.io'
+  const allowOrigin = ALLOWED_ORIGINS.has(origin) ? origin : 'https://magiadosim.github.io'
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
