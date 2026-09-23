@@ -134,7 +134,7 @@ vendorDetailView=function(id){
         <div class="action-row">
           <button class="btn-secondary" id="edit-vendor">Editar fornecedor</button>
           <button class="btn-secondary" id="add-note">Adicionar observação</button>
-          ${canDelete?`<button class="btn-danger" data-delete-vendor="${v.id}">Excluir fornecedor</button>`:''}
+          ${state.role==='admin'&&!v.masterSupplierId?`<button class="btn-secondary" data-promote-vendor="${v.id}">Adicionar ao cadastro geral</button>`:''}\n          ${canDelete?`<button class="btn-danger" data-delete-vendor="${v.id}">Excluir fornecedor</button>`:''}
         </div>
         <div class="notes"><strong style="color:var(--brown)">Observações</strong><br>${esc(v.note)}</div>
       </div>
@@ -266,6 +266,51 @@ openVendorEditor=function(v){
     }
   );
 };
+
+async function promoteVendorToMaster(vendorId){
+  const vendor=state.vendors.find(v=>v.id===vendorId);
+  if(!vendor||state.role!=='admin'||vendor.masterSupplierId) return;
+
+  const ok=confirm(`Adicionar “${vendor.name}” ao cadastro geral de fornecedores?\\n\\nEle continuará vinculado a este casamento e também ficará disponível para outros eventos.`);
+  if(!ok) return;
+
+  const {data:master,error:createError}=await sb
+    .from('suppliers')
+    .insert({
+      name:vendor.name,
+      category:vendor.category||null,
+      phone:vendor.phone&&vendor.phone!=='—'?vendor.phone:null,
+      instagram:vendor.instagram&&vendor.instagram!=='—'?vendor.instagram:null,
+      website:vendor.site&&vendor.site!=='—'?vendor.site:null,
+      notes:vendor.note&&vendor.note!=='Sem observações.'?vendor.note:null,
+      active:true
+    })
+    .select()
+    .single();
+
+  if(createError){
+    console.error(createError);
+    toast('Não foi possível adicionar ao cadastro geral.');
+    return;
+  }
+
+  const {error:linkError}=await sb
+    .from('vendors')
+    .update({supplier_id:master.id})
+    .eq('id',vendorId);
+
+  if(linkError){
+    console.error(linkError);
+    await sb.from('suppliers').delete().eq('id',master.id);
+    toast('Não foi possível vincular o fornecedor ao cadastro geral.');
+    return;
+  }
+
+  await loadAdminData();
+  if(state.wedding) await loadWeddingData(state.wedding.id);
+  toast('Fornecedor adicionado ao cadastro geral e vinculado ao casamento.');
+  render();
+}
 
 async function deleteWeddingVendor(vendorId){
   const vendor=state.vendors.find(v=>v.id===vendorId);
@@ -514,6 +559,10 @@ viewFor=function(r){
 const vendorPurchasesBaseBind=bindView;
 bindView=function(r){
   vendorPurchasesBaseBind(r);
+
+  document.querySelectorAll('[data-promote-vendor]').forEach(btn=>{
+    btn.onclick=()=>promoteVendorToMaster(btn.dataset.promoteVendor);
+  });
 
   document.querySelectorAll('[data-delete-vendor]').forEach(btn=>{
     btn.onclick=()=>deleteWeddingVendor(btn.dataset.deleteVendor);
