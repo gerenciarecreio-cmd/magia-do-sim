@@ -79,18 +79,23 @@ vendorsView=function(){
       `).join('')}
     </div>
 
-    <div class="card list-card">
+    <div class="card list-card vendor-list-card">
       ${items.length?items.map(v=>`
-        <a href="#/fornecedores/${v.id}" class="list-row vendor-row vendor-row-with-source">
-          <div class="thumb">${esc((v.category||'F')[0])}</div>
-          <div class="vendor-name">
-            <strong>${esc(v.name)}</strong>
-            <span>${esc(v.category)} • ${vendorSourceLabel(v)}</span>
-          </div>
-          <div class="category">${esc(v.category)}</div>
-          <span class="badge ${statusClass(v.status)}">${esc(v.status)}</span>
-          ${icons.chevron}
-        </a>
+        <div class="vendor-list-item">
+          <a href="#/fornecedores/${v.id}" class="list-row vendor-row vendor-row-with-source vendor-list-link">
+            <div class="thumb">${esc((v.category||'F')[0])}</div>
+            <div class="vendor-name">
+              <strong>${esc(v.name)}</strong>
+              <span>${esc(v.category)} • ${vendorSourceLabel(v)}</span>
+            </div>
+            <div class="category">${esc(v.category)}</div>
+            <span class="badge ${statusClass(v.status)}">${esc(v.status)}</span>
+            ${icons.chevron}
+          </a>
+          ${state.role==='admin'||!v.masterSupplierId
+            ?`<button type="button" class="vendor-delete-list-btn" data-delete-vendor="${v.id}" title="Excluir fornecedor deste casamento">Excluir fornecedor</button>`
+            :''}
+        </div>
       `).join(''):emptyState(
         'Ainda não há fornecedores neste filtro.',
         state.role==='client'
@@ -320,20 +325,46 @@ async function deleteWeddingVendor(vendorId){
     return;
   }
 
-  const ok=confirm(`Excluir “${vendor.name}” deste casamento?`);
+  const linkedPayments=(state.payments||[]).filter(p=>p.vendor_id===vendorId);
+  const paymentWarning=linkedPayments.length
+    ? `\n\nTambém serão excluídos ${linkedPayments.length} pagamento(s) vinculado(s) a este fornecedor neste casamento.`
+    : '';
+
+  const ok=confirm(
+    `Excluir o fornecedor “${vendor.name}” deste casamento?${paymentWarning}\n\nEsta ação não exclui o fornecedor do cadastro geral da assessoria.`
+  );
   if(!ok) return;
 
-  const {error}=await sb.from('vendors').delete().eq('id',vendorId);
+  if(linkedPayments.length){
+    const {error:paymentError}=await sb
+      .from('payments')
+      .delete()
+      .eq('wedding_id',state.wedding.id)
+      .eq('vendor_id',vendorId);
+
+    if(paymentError){
+      console.error(paymentError);
+      toast('Não foi possível excluir os pagamentos vinculados ao fornecedor.');
+      return;
+    }
+  }
+
+  const {error}=await sb
+    .from('vendors')
+    .delete()
+    .eq('wedding_id',state.wedding.id)
+    .eq('id',vendorId);
+
   if(error){
     console.error(error);
-    toast('Não foi possível excluir. Verifique se existem pagamentos vinculados.');
+    toast('Não foi possível excluir o fornecedor.');
     return;
   }
 
   await loadWeddingData(state.wedding.id);
-  goto('fornecedores');
-  toast('Fornecedor removido deste casamento.');
-  render();
+  if(route().startsWith('fornecedores/')) goto('fornecedores');
+  else render();
+  toast('Fornecedor excluído deste casamento.');
 }
 
 function purchaseTotals(){
