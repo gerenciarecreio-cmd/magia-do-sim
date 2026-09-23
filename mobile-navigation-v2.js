@@ -91,9 +91,12 @@
             ['fornecedores','Fornecedores','users'],
             ['checklist','Checklist','check'],
             ['cronograma','Cronograma','calendar'],
+            ['cerimonial','Cerimonial','calendar'],
+            ['organizacao-casa','Organização da casa','home'],
             ['convidados','Lista de convidados','users'],
             ['documentos','Documentos','file'],
             ['financeiro','Financeiro do casamento','money'],
+            ['compras','Compras','money'],
             ['outros-gastos','Outros Gastos','money'],
             ['lua-de-mel','Lua de mel','heart'],
             ['reunioes','Reuniões do casamento','meeting']
@@ -116,6 +119,8 @@
         items:[
           ['meu-casamento','Meu casamento','heart'],
           ['cronograma','Cronograma','calendar'],
+          ['cerimonial','Cerimonial','calendar'],
+          ['organizacao-casa','Organização da casa','home'],
           ['convidados','Lista de convidados','users'],
           ['documentos','Documentos','file'],
           ['reunioes','Reuniões','meeting']
@@ -125,6 +130,7 @@
         title:'Gastos',
         items:[
           ['financeiro','Financeiro','money'],
+          ['compras','Compras','money'],
           ['outros-gastos','Outros Gastos','money'],
           ['lua-de-mel','Lua de mel','heart']
         ]
