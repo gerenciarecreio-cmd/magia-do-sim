@@ -230,7 +230,7 @@ function shellView(r,content){
   const active=r.startsWith('fornecedores/')?'fornecedores':r;
   const displayName=state.profile?.full_name || (state.role==='admin'?'Assessoria':'Cliente');
   const first=(displayName||'A').trim()[0]?.toUpperCase()||'A';
-  const avatarHtml=state.role==='client'&&state.couplePhotoUrl ? `<div class="avatar" style="overflow:hidden"><img src="${esc(state.couplePhotoUrl)}" alt="Foto do casal" style="width:100%;height:100%;object-fit:cover"></div>` : `${avatarHtml}`;
+  const avatarHtml=state.role==='client'&&state.couplePhotoUrl ? `<div class="avatar" style="overflow:hidden"><img src="${esc(state.couplePhotoUrl)}" alt="Foto do casal" style="width:100%;height:100%;object-fit:cover"></div>` : `<div class="avatar">${first}</div>`;
   const adminContext=state.role==='admin' && state.wedding ? `<span class="small muted">Gerenciando: <strong>${esc(currentCouple())}</strong></span>` : '';
   return `<div class="app-shell">
     <aside class="sidebar">

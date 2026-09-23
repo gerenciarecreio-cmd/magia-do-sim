@@ -1,0 +1,26 @@
+/* Módulos compartilhados — Assessoria + Noivos */
+.ams-workspace{max-width:1320px}
+.ams-tabs{display:flex;gap:8px;margin-bottom:16px;padding:7px;border:1px solid var(--line);border-radius:15px;background:#ece7de;overflow:auto}
+.ams-tabs button{border:0;border-radius:10px;background:transparent;padding:10px 14px;color:var(--brown);font-weight:700;white-space:nowrap}
+.ams-tabs button.active{background:var(--olive);color:#fff}
+.ams-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.ams-kpis .card{padding:15px}
+.ams-kpis span{display:block;color:var(--muted);font-size:10px}
+.ams-kpis strong{display:block;margin-top:5px;color:var(--brown);font-family:"Playfair Display",serif;font-size:24px;font-weight:500}
+.ams-agenda-row,.ams-check-row,.ams-sequence-row,.ams-fin-row,.ams-home-row{display:grid;gap:12px;align-items:center;padding:13px 14px;border-bottom:1px solid var(--line)}
+.ams-agenda-row{grid-template-columns:85px minmax(0,1fr) auto}
+.ams-check-row{grid-template-columns:34px minmax(0,1fr) auto}
+.ams-sequence-row{grid-template-columns:46px minmax(0,1fr) 75px auto}
+.ams-fin-row{grid-template-columns:minmax(0,1fr) 120px 100px auto}
+.ams-home-row{grid-template-columns:minmax(180px,1.5fr) repeat(5,minmax(80px,.7fr)) minmax(210px,1fr)}
+.ams-agenda-row:last-child,.ams-check-row:last-child,.ams-sequence-row:last-child,.ams-fin-row:last-child,.ams-home-row:last-child{border-bottom:0}
+.ams-time strong{display:block;color:var(--olive);font-size:18px}.ams-time span,.ams-agenda-copy span,.ams-agenda-copy small,.ams-check-row span,.ams-sequence-row span,.ams-fin-row span,.ams-home-row span{display:block;margin-top:3px;color:var(--muted);font-size:9px}
+.ams-sequence-number{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:var(--olive);color:#fff;font-family:"Playfair Display",serif}
+.ams-order{display:flex;gap:5px}.ams-order button{width:31px;height:31px;border:1px solid var(--line);border-radius:9px;background:#f8f3eb}.ams-order button:disabled{opacity:.3}
+.ams-sector-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.ams-sector-grid button{padding:12px;border:1px solid var(--line);border-radius:12px;background:#f8f3eb;text-align:left}.ams-sector-grid strong,.ams-sector-grid span{display:block}.ams-sector-grid span{margin-top:3px;color:var(--muted);font-size:9px}
+.ams-suggestion-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ams-suggestions{display:grid;gap:6px;margin:10px 0}.ams-suggestions button{padding:8px 9px;border:1px solid var(--line);border-radius:9px;background:#faf7f1;text-align:left}.ams-suggestions button.done{background:#e9ecdf;color:var(--olive)}
+.ams-share-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin:12px 0}.ams-textarea{min-height:110px;padding-left:13px!important}
+.ams-honey-next{display:grid;grid-template-columns:170px 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.ams-honey-next:last-child{border-bottom:0}
+@media(max-width:900px){.ams-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ams-suggestion-grid,.ams-sector-grid{grid-template-columns:1fr}.ams-home-row{grid-template-columns:repeat(2,minmax(0,1fr))}.ams-home-row>div:first-child,.ams-home-row>.action-row{grid-column:1/-1}.ams-agenda-row{grid-template-columns:70px minmax(0,1fr)}.ams-agenda-row>.btn-secondary{grid-column:2}.ams-sequence-row{grid-template-columns:42px minmax(0,1fr) 70px}.ams-sequence-row>.action-row{grid-column:2/-1}.ams-fin-row{grid-template-columns:minmax(0,1fr) auto}.ams-fin-row>.action-row{grid-column:1/-1}}
+@media(max-width:650px){.ams-tabs{position:sticky;top:68px;z-index:15;margin-left:-14px;margin-right:-14px;border-radius:0}.ams-kpis{grid-template-columns:1fr 1fr}.ams-share-line{grid-template-columns:1fr}.ams-honey-next{grid-template-columns:1fr}.ams-check-row{grid-template-columns:32px minmax(0,1fr)}.ams-check-row>.action-row{grid-column:2}}
