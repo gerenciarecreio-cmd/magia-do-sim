@@ -183,6 +183,7 @@
         </div>
         <div class="mobile-more-scroll">
           ${sections}
+          <button type="button" class="mobile-more-install" data-mobile-install>${icons.home}<span>Adicionar à tela inicial</span></button>
           <button type="button" class="mobile-more-logout" data-mobile-logout>${icons.logout}<span>Sair</span></button>
         </div>
       </div>
@@ -198,6 +199,18 @@
     back.querySelectorAll('[data-mobile-close]').forEach(a=>{
       a.onclick=()=>closeMobileMore();
     });
+    const installBtn=back.querySelector('[data-mobile-install]');
+    if(installBtn){
+      if(window.AMSPWA?.isStandalone?.()){
+        installBtn.hidden=true;
+      }else{
+        installBtn.onclick=()=>{
+          closeMobileMore();
+          setTimeout(()=>window.AMSPWA?.installOrExplain?.(),80);
+        };
+      }
+    }
+
     back.querySelector('[data-mobile-logout]').onclick=()=>{
       closeMobileMore();
       document.getElementById('logout')?.click();
