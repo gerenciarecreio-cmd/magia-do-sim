@@ -484,3 +484,26 @@ img { max-width: 100%; display: block; }
   .admin-kpis { grid-template-columns:1fr 1fr; }
   .login-form h1 { font-size:31px; }
 }
+
+
+/* Recuperação de senha — contador visível de reenvio */
+.password-reset-countdown{
+  min-height:18px;
+  margin-top:7px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.4;
+  text-align:left;
+}
+.password-reset-countdown.active{
+  color:var(--brown-2);
+}
+#forgot:disabled{
+  opacity:.62;
+  cursor:not-allowed;
+}
+@media(max-width:560px){
+  .password-reset-countdown{
+    font-size:9px;
+  }
+}
