@@ -413,9 +413,32 @@ function bindLogin(){
   document.getElementById('forgot').onclick=async()=>{
     const email=document.getElementById('email').value.trim();
     if(!email){toast('Digite seu e-mail primeiro.');return;}
-    const redirectTo='https://magiadosim.github.io/magia-do-sim/';
-    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
-    toast(error?'Não foi possível enviar o e-mail.':'Enviamos um link de recuperação para seu e-mail.');
+    const btn=document.getElementById('forgot');
+    const original=btn.textContent;
+    btn.disabled=true;
+    btn.textContent='Enviando...';
+    try{
+      const redirectTo='https://magiadosim.github.io/magia-do-sim/';
+      const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo});
+      if(error){
+        console.error('password-reset',error);
+        const msg=String(error.message||error.code||'').toLowerCase();
+        if(error.status===429 || msg.includes('rate limit') || msg.includes('too many') || msg.includes('over_email_send_rate_limit')){
+          toast('O limite temporário de e-mails de recuperação foi atingido. Aguarde um pouco e tente novamente.');
+          return;
+        }
+        if(msg.includes('redirect') || msg.includes('url')){
+          toast('O endereço de recuperação ainda não está autorizado no Supabase.');
+          return;
+        }
+        toast('Não foi possível enviar o e-mail de recuperação. Tente novamente em alguns minutos.');
+        return;
+      }
+      toast('Enviamos um link de recuperação para seu e-mail.');
+    }finally{
+      btn.disabled=false;
+      btn.textContent=original;
+    }
   };
 }
 
