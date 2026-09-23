@@ -311,3 +311,14 @@
     grid-template-columns:1fr;
   }
 }
+
+/* Fornecedores: exclusão somente dentro da tela de detalhes */
+.vendor-list-item{
+  display:block;
+}
+.vendor-list-item .vendor-list-link{
+  width:100%;
+}
+.vendor-delete-list-btn{
+  display:none !important;
+}
