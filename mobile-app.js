@@ -86,7 +86,21 @@ dashboardView = function(){
 
     <section class="dashboard-main">
       <div class="card card-pad"><div class="card-title"><h2>Seu planejamento</h2><span class="sub">${comp}% concluído</span></div><div class="progress-track"><div class="progress-fill" style="width:${comp}%"></div></div><div class="steps">${[['Local',!!state.wedding.venue],['Fotografia',state.vendors.some(v=>v.category==='Fotografia'&&v.status==='Contratado')],['Buffet',state.vendors.some(v=>v.category==='Buffet'&&v.status==='Contratado')],['Decoração',state.vendors.some(v=>v.category==='Decoração'&&v.status!=='Pendente')],['Música',state.vendors.some(v=>v.category==='Música'&&v.status==='Contratado')]].map(([t,done])=>`<div class="step ${done?'done':''}"><div class="step-dot">${done?'✓':'○'}</div>${t}</div>`).join('')}</div></div>
-      <div class="card card-pad"><div class="card-title"><h2>Próximos passos</h2><a href="#/checklist" class="sub">Ver todos ›</a></div><div class="next-list">${next.length?next.map((t,i)=>`<a class="next-item" href="#/checklist"><div class="next-num">0${i+1}</div><div><strong>${esc(t.title)}</strong><span>Prazo: ${esc(t.due)}</span></div>${icons.chevron}</a>`).join(''):emptyState('Tudo em dia!','Nenhuma tarefa pendente no momento.')}</div></div>
+      <div class="card card-pad mobile-next-steps-card">
+        <div class="card-title"><h2>Próximos passos</h2><a href="#/checklist" class="sub">Ver todos ›</a></div>
+        <div class="mobile-next-steps">
+          ${next.length?next.map(t=>`
+            <a class="mobile-next-step" href="#/checklist" aria-label="Abrir checklist: ${esc(t.title)}">
+              <span class="mobile-next-check" aria-hidden="true"></span>
+              <span class="mobile-next-copy">
+                <strong>${esc(t.title)}</strong>
+                <small>${esc(t.due==='Sem prazo'?'Sem prazo':`Prazo: ${t.due}`)}</small>
+              </span>
+              <span class="mobile-next-arrow" aria-hidden="true">›</span>
+            </a>
+          `).join(''):emptyState('Tudo em dia!','Nenhuma tarefa pendente no momento.')}
+        </div>
+      </div>
     </section>
 
     <section class="summary-cards">
