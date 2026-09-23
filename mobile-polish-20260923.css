@@ -1,0 +1,489 @@
+/* A Magia do Sim — polimento mobile unificado
+   Carregado por último para manter toda a assessoria consistente no celular. */
+
+@media(max-width:820px){
+  html,body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+  }
+
+  body{
+    padding-bottom:calc(70px + env(safe-area-inset-bottom,0px));
+    background:#f6efe6;
+  }
+
+  .app-shell,
+  .client-app-shell,
+  .admin-app-shell,
+  .main,
+  .page{
+    min-width:0;
+    max-width:100%;
+  }
+
+  /* Topo mais limpo: logo + notificações + avatar.
+     O "Sair" já existe no menu Mais. */
+  .client-app-shell .topbar,
+  .admin-app-shell .topbar{
+    min-height:62px;
+    height:62px;
+    padding:0 11px;
+    gap:8px;
+    background:#faf6f0;
+    border-bottom:1px solid rgba(106,77,54,.09);
+  }
+
+  .mobile-app-brand{
+    min-width:0;
+    gap:7px;
+  }
+
+  .mobile-app-brand img,
+  .admin-app-shell .mobile-app-brand img{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    border-radius:10px;
+  }
+
+  .mobile-app-brand div{
+    min-width:0;
+  }
+
+  .mobile-app-brand strong{
+    display:block;
+    max-width:128px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    font-size:11px;
+  }
+
+  .mobile-app-brand span{
+    font-size:6.5px;
+  }
+
+  .client-app-shell .client-user-copy{
+    display:none;
+  }
+
+  .client-app-shell .client-userbox{
+    padding:0;
+    gap:0;
+  }
+
+  .client-app-shell .topbar-right,
+  .admin-app-shell .topbar-right{
+    margin-left:auto;
+    gap:6px;
+    flex:0 0 auto;
+  }
+
+  .client-app-shell .icon-btn,
+  .admin-app-shell .icon-btn{
+    width:36px;
+    height:36px;
+    min-width:36px;
+    border-radius:11px;
+  }
+
+  .client-app-shell .avatar,
+  .admin-app-shell .avatar{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+  }
+
+  .admin-app-shell .profile-chip{
+    padding:0;
+  }
+
+  .admin-app-shell .profile-chip .small{
+    display:none;
+  }
+
+  /* Ritmo e leitura das páginas */
+  .client-app-shell .page,
+  .admin-app-shell .page,
+  .page{
+    padding:16px 12px calc(98px + env(safe-area-inset-bottom,0px));
+  }
+
+  .page-head{
+    gap:9px;
+    margin-bottom:14px;
+  }
+
+  .page-head h1,
+  .client-app-shell .page-head h1{
+    font-size:25px;
+    line-height:1.08;
+    overflow-wrap:anywhere;
+  }
+
+  .page-head p,
+  .client-app-shell .page-head p{
+    margin-top:5px;
+    font-size:10px;
+    line-height:1.45;
+  }
+
+  .page-head>.btn-primary,
+  .page-head>.btn-secondary,
+  .page-head>.action-row button,
+  .page-head>.action-row a{
+    min-height:44px;
+    border-radius:11px;
+  }
+
+  .card{
+    border-radius:15px;
+  }
+
+  .card-pad{
+    padding:14px;
+  }
+
+  .card-title{
+    gap:8px;
+    margin-bottom:11px;
+  }
+
+  .card-title h2,
+  .card-title h3{
+    font-size:15px;
+    line-height:1.2;
+  }
+
+  /* Controles de toque e formulários */
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .filter-btn,
+  .link-btn,
+  button{
+    touch-action:manipulation;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger{
+    min-height:42px;
+  }
+
+  .field{
+    margin-bottom:12px;
+  }
+
+  .field label{
+    display:block;
+    margin-bottom:6px;
+    font-size:10px;
+  }
+
+  .input,
+  select.input,
+  textarea.input{
+    max-width:100%;
+    font-size:16px !important;
+    line-height:1.25;
+  }
+
+  /* Evita botões espremidos em detalhes e módulos */
+  .supplier-detail .action-row,
+  .ams-workspace .action-row,
+  .ams-honeymoon .action-row{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+    width:100%;
+  }
+
+  .supplier-detail .action-row>*,
+  .ams-workspace .action-row>*,
+  .ams-honeymoon .action-row>*{
+    width:100%;
+    min-width:0;
+    min-height:40px;
+    padding:8px 7px;
+    font-size:9px;
+  }
+
+  .contract-line{
+    align-items:flex-start;
+    gap:12px;
+  }
+
+  .contract-line span{
+    flex:1 1 auto;
+  }
+
+  .contract-line strong{
+    flex:0 0 auto;
+    max-width:54%;
+    text-align:right;
+    overflow-wrap:anywhere;
+  }
+
+  /* Fornecedores: excluir continua visível sem virar uma faixa enorme */
+  .vendor-list-item{
+    grid-template-columns:minmax(0,1fr) 74px !important;
+    align-items:stretch;
+  }
+
+  .vendor-list-item .vendor-list-link{
+    min-height:66px !important;
+  }
+
+  .vendor-delete-list-btn{
+    width:74px !important;
+    min-width:74px !important;
+    min-height:66px !important;
+    padding:8px 5px !important;
+    border-top:0 !important;
+    border-left:1px solid var(--line) !important;
+    text-align:center !important;
+    line-height:1.15;
+    font-size:8px !important;
+  }
+
+  /* Financeiro e compras */
+  .finance-totals,
+  .finance-totals-4{
+    gap:8px;
+  }
+
+  .money-card{
+    padding:13px;
+  }
+
+  .money-card strong{
+    font-size:23px;
+  }
+
+  .purchase-row{
+    border-bottom-color:rgba(92,63,44,.1);
+  }
+
+  .purchase-actions button{
+    min-height:38px;
+  }
+
+  /* Lista de convidados: mais espaço para o nome e ações tocáveis */
+  .guest-row{
+    padding:12px 10px;
+  }
+
+  .guest-check-btn,
+  .guest-edit-btn{
+    min-height:38px;
+  }
+
+  .guest-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+  }
+
+  .guest-actions .btn-primary,
+  .guest-actions .btn-secondary{
+    width:100%;
+    min-width:0;
+  }
+
+  /* Módulos Cerimonial / Casa / Lua de mel */
+  .ams-tabs{
+    top:62px !important;
+    margin-left:-12px !important;
+    margin-right:-12px !important;
+    margin-bottom:14px;
+    padding:7px 12px;
+    border-left:0;
+    border-right:0;
+    border-radius:0 !important;
+    background:rgba(246,240,232,.98);
+    box-shadow:0 7px 16px rgba(66,50,36,.05);
+    scroll-snap-type:x proximity;
+    scrollbar-width:none;
+  }
+
+  .ams-tabs::-webkit-scrollbar{
+    display:none;
+  }
+
+  .ams-tabs button{
+    min-height:38px;
+    padding:8px 12px;
+    flex:0 0 auto;
+    scroll-snap-align:start;
+    font-size:9px;
+  }
+
+  .ams-kpis{
+    gap:8px;
+  }
+
+  .ams-kpis .card{
+    min-height:82px;
+    padding:12px;
+    align-content:center;
+  }
+
+  .ams-kpis strong{
+    font-size:21px;
+  }
+
+  .ams-agenda-row,
+  .ams-check-row,
+  .ams-sequence-row,
+  .ams-fin-row,
+  .ams-home-row{
+    padding:12px;
+    gap:8px;
+  }
+
+  .ams-check-row>.action-row,
+  .ams-sequence-row>.action-row,
+  .ams-fin-row>.action-row,
+  .ams-home-row>.action-row{
+    margin-top:2px;
+  }
+
+  .ams-order button{
+    width:38px;
+    height:38px;
+  }
+
+  .ams-share-line .input{
+    padding-left:11px !important;
+  }
+
+  .ams-suggestions button{
+    min-height:40px;
+    line-height:1.25;
+  }
+
+  /* Menu Mais */
+  .mobile-more-sheet{
+    max-height:calc(100dvh - 18px);
+    border-radius:22px 22px 0 0;
+  }
+
+  .mobile-more-scroll{
+    padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  }
+
+  .mobile-more-grid{
+    gap:7px;
+  }
+
+  .mobile-more-item{
+    min-height:56px;
+  }
+
+  /* ADMIN: CRM em cartões horizontais, um estágio por vez */
+  .admin-app-shell .crm-board{
+    grid-template-columns:none;
+    grid-auto-flow:column;
+    grid-auto-columns:min(88vw,360px);
+    gap:10px;
+    overflow-x:auto;
+    padding:0 2px 8px;
+    scroll-snap-type:x mandatory;
+    overscroll-behavior-x:contain;
+    scrollbar-width:none;
+  }
+
+  .admin-app-shell .crm-board::-webkit-scrollbar{
+    display:none;
+  }
+
+  .admin-app-shell .crm-column{
+    min-width:0;
+    scroll-snap-align:start;
+  }
+
+  .company-calendar-card{
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+  }
+
+  /* Navegação inferior */
+  .mobile-nav-v2{
+    height:calc(68px + env(safe-area-inset-bottom,0px));
+  }
+
+  .mobile-nav-v2 a{
+    min-height:54px;
+    padding:6px 2px 4px;
+  }
+
+  .mobile-nav-v2 a span{
+    max-width:100%;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+
+  #toast-root{
+    bottom:calc(82px + env(safe-area-inset-bottom,0px));
+  }
+}
+
+@media(max-width:520px){
+  .ams-home-row{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  .ams-home-row>div:first-child,
+  .ams-home-row>.action-row{
+    grid-column:1/-1 !important;
+  }
+
+  .ams-sequence-row{
+    grid-template-columns:40px minmax(0,1fr) !important;
+  }
+
+  .ams-sequence-row>.ams-order,
+  .ams-sequence-row>.action-row{
+    grid-column:2 !important;
+  }
+
+  .ams-fin-row{
+    grid-template-columns:minmax(0,1fr) auto !important;
+  }
+
+  .ams-fin-row>.action-row{
+    grid-column:1/-1 !important;
+  }
+}
+
+@media(max-width:390px){
+  .mobile-app-brand strong{
+    max-width:108px;
+  }
+
+  .guest-actions{
+    grid-template-columns:1fr;
+  }
+
+  .supplier-detail .action-row,
+  .ams-workspace .action-row,
+  .ams-honeymoon .action-row{
+    grid-template-columns:1fr;
+  }
+
+  .company-kpis{
+    grid-template-columns:1fr !important;
+  }
+
+  .vendor-list-item{
+    grid-template-columns:minmax(0,1fr) 64px !important;
+  }
+
+  .vendor-delete-list-btn{
+    width:64px !important;
+    min-width:64px !important;
+  }
+}
