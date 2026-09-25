@@ -546,3 +546,123 @@
   .service-meeting-note>.btn-secondary{grid-column:2;justify-self:start;min-height:38px}
 }
 @media(max-width:390px){.service-client-kpis{grid-template-columns:1fr}}
+
+/* Dashboard exclusivo dos clientes de serviços */
+.service-dashboard{
+  margin-bottom:16px;
+  padding:18px;
+  border:1px solid rgba(102,77,53,.13);
+  border-radius:18px;
+  background:rgba(255,250,243,.72);
+}
+.service-dashboard-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:14px;
+}
+.service-dashboard-head h2{
+  margin:3px 0 2px;
+  color:var(--brown);
+  font-family:"Playfair Display",serif;
+  font-size:22px;
+  font-weight:500;
+}
+.service-dashboard-head p{
+  margin:0;
+  color:var(--muted);
+  font-size:9px;
+}
+.service-dashboard-eyebrow{
+  display:block;
+  color:var(--olive);
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.14em;
+}
+.service-dashboard-filters{
+  display:flex;
+  gap:10px;
+  align-items:end;
+}
+.service-dashboard-filters .field{
+  min-width:150px;
+  margin:0;
+}
+.service-dashboard-filters .input{
+  min-height:38px;
+  padding-left:11px;
+}
+.service-dashboard-kpis{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.service-dashboard-kpi{
+  min-height:108px;
+  padding:14px;
+  display:grid;
+  align-content:center;
+  gap:5px;
+}
+.service-dashboard-kpi>span{
+  color:var(--muted);
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.service-dashboard-kpi>strong{
+  color:var(--brown);
+  font-family:"Playfair Display",serif;
+  font-size:27px;
+  line-height:1.08;
+  font-weight:600;
+}
+.service-dashboard-kpi.money>strong{
+  font-size:24px;
+}
+.service-dashboard-kpi>small{
+  color:var(--muted);
+  font-size:8px;
+}
+
+@media(max-width:900px){
+  .service-dashboard-kpis{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:820px){
+  .service-dashboard{
+    padding:13px;
+    border-radius:15px;
+  }
+  .service-dashboard-head{
+    display:grid;
+    align-items:stretch;
+    gap:12px;
+  }
+  .service-dashboard-filters{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .service-dashboard-filters .field{
+    min-width:0;
+  }
+  .service-dashboard-kpi{
+    min-height:90px;
+    padding:12px;
+  }
+  .service-dashboard-kpi>strong{
+    font-size:23px;
+  }
+  .service-dashboard-kpi.money>strong{
+    font-size:19px;
+  }
+}
+@media(max-width:390px){
+  .service-dashboard-kpis{
+    grid-template-columns:1fr;
+  }
+}
