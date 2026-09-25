@@ -9,7 +9,9 @@ Object.assign(state, {
   dashboardSector: state.dashboardSector || 'Todos',
   financeMonth: state.financeMonth || new Date().toISOString().slice(0,7),
   financeSector: state.financeSector || 'Todos',
-  eventCalendarMonth: state.eventCalendarMonth || new Date().toISOString().slice(0,7)
+  eventCalendarMonth: state.eventCalendarMonth || new Date().toISOString().slice(0,7),
+  serviceClientFilter: state.serviceClientFilter || 'Todos',
+  serviceClientSearch: state.serviceClientSearch || ''
 });
 
 const CRM_STATUSES = [
@@ -99,6 +101,8 @@ viewFor = function(r){
   if(state.role === 'admin'){
     if(r === 'dashboard-empresa') return companyDashboardView();
     if(r === 'crm') return crmView();
+    if(r === 'clientes-servicos') return serviceClientsView();
+    if(r.startsWith('clientes-servicos/')) return companyEventDetailView(r.split('/')[1]);
     if(r === 'agenda-comercial') return companyMeetingsView();
     if(r === 'calendario-eventos') return companyCalendarView();
     if(r === 'financeiro-empresa') return companyFinanceView();
@@ -114,6 +118,8 @@ render = function(){
     const adminOnly =
       r === 'dashboard-empresa' ||
       r === 'crm' ||
+      r === 'clientes-servicos' ||
+      r.startsWith('clientes-servicos/') ||
       r === 'agenda-comercial' ||
       r === 'calendario-eventos' ||
       r === 'financeiro-empresa' ||
@@ -131,12 +137,17 @@ shellView = function(r,content){
   let html = baseShellView(r,content);
   if(state.role !== 'admin') return html;
 
-  const active = r.startsWith('eventos/') ? 'calendario-eventos' : r;
+  const active = r.startsWith('eventos/')
+    ? 'calendario-eventos'
+    : r.startsWith('clientes-servicos/')
+      ? 'clientes-servicos'
+      : r;
   const adminMenu = `
     <div class="admin-company-nav">
       <div class="admin-nav-label">GESTÃO DA EMPRESA</div>
       <a href="#/dashboard-empresa" class="nav-item ${active==='dashboard-empresa'?'active':''}">${icons.admin}<span>Dashboard</span></a>
       <a href="#/crm" class="nav-item ${active==='crm'?'active':''}">${icons.users}<span>CRM</span></a>
+      <a href="#/clientes-servicos" class="nav-item ${active==='clientes-servicos'?'active':''}">${icons.users}<span>Clientes de serviços</span></a>
       <a href="#/agenda-comercial" class="nav-item ${active==='agenda-comercial'?'active':''}">${icons.meeting}<span>Agenda reuniões</span></a>
       <a href="#/calendario-eventos" class="nav-item ${active==='calendario-eventos'?'active':''}">${icons.calendar}<span>Calendário eventos</span></a>
       <a href="#/financeiro-empresa" class="nav-item ${active==='financeiro-empresa'?'active':''}">${icons.money}<span>Financeiro empresa</span></a>
@@ -321,6 +332,55 @@ function crmView(){
         <button class="btn-primary" id="new-lead">+ Novo lead</button>
       </div>
       <div class="crm-board">${columns}</div>
+    </div>
+  `;
+}
+
+
+function serviceClientsView(){
+  const search=String(state.serviceClientSearch||'').trim().toLowerCase();
+  const items=state.companyEvents
+    .filter(e=>state.serviceClientFilter==='Todos'||e.service_sector===state.serviceClientFilter)
+    .filter(e=>!search||[e.client_name,e.phone,e.venue,e.service_sector,e.notes].some(v=>String(v||'').toLowerCase().includes(search)))
+    .sort((a,b)=>String(a.event_date||'9999-12-31').localeCompare(String(b.event_date||'9999-12-31'))||String(a.client_name||'').localeCompare(String(b.client_name||'')));
+  const today=new Date().toISOString().slice(0,10);
+  const upcoming=[...state.companyMeetings].filter(m=>m.meeting_date>=today).sort((a,b)=>(String(a.meeting_date)+String(a.meeting_time||'')).localeCompare(String(b.meeting_date)+String(b.meeting_time||'')));
+  return `
+    <div class="page service-clients-page">
+      <div class="page-head">
+        <div>
+          <h1>Clientes de serviços</h1>
+          <p>Gerencie clientes de decoração e outros serviços, com evento, reuniões e anotações no mesmo lugar.</p>
+        </div>
+        <button class="btn-primary" id="new-service-client">+ Novo cliente</button>
+      </div>
+      <div class="service-client-kpis">
+        <div class="card service-client-kpi"><span>Cadastros</span><strong>${state.companyEvents.length}</strong><small>clientes e oportunidades</small></div>
+        <div class="card service-client-kpi"><span>Decoração</span><strong>${state.companyEvents.filter(e=>e.service_sector==='Decoração').length}</strong><small>cadastros deste serviço</small></div>
+        <div class="card service-client-kpi"><span>Fechados</span><strong>${state.companyEvents.filter(e=>isClosedLead(e.status)).length}</strong><small>clientes confirmados</small></div>
+        <div class="card service-client-kpi"><span>Próxima reunião</span><strong class="service-next-meeting">${upcoming[0]?dateBR(upcoming[0].meeting_date):'—'}</strong><small>${upcoming[0]?esc(upcoming[0].client_name):'nenhuma agendada'}</small></div>
+      </div>
+      <div class="service-client-tools">
+        <input class="input" id="service-client-search" type="search" placeholder="Buscar cliente, telefone ou local..." value="${esc(state.serviceClientSearch)}">
+        <div class="filters service-client-filters">
+          ${['Todos',...COMPANY_SECTORS].map(s=>`<button class="filter-btn ${state.serviceClientFilter===s?'active':''}" data-service-client-filter="${esc(s)}">${esc(s)}</button>`).join('')}
+        </div>
+      </div>
+      <div class="card service-client-list">
+        ${items.length?items.map(e=>{
+          const meetings=state.companyMeetings.filter(m=>m.event_id===e.id&&m.meeting_date>=today).sort((a,b)=>(String(a.meeting_date)+String(a.meeting_time||'')).localeCompare(String(b.meeting_date)+String(b.meeting_time||'')));
+          return `
+            <a href="#/clientes-servicos/${e.id}" class="service-client-row">
+              <div class="service-client-avatar">${esc((e.client_name||'C')[0].toUpperCase())}</div>
+              <div class="service-client-main"><strong>${esc(e.client_name)}</strong><span>${esc(e.service_sector)} • ${esc(e.phone||'sem telefone')}</span></div>
+              <div class="service-client-date"><span>Evento</span><strong>${e.event_date?dateBR(e.event_date):'A definir'}</strong></div>
+              <div class="service-client-date"><span>Próxima reunião</span><strong>${meetings[0]?dateBR(meetings[0].meeting_date):'—'}</strong></div>
+              <span class="crm-inline-status ${crmStatusClass(e.status)}">${esc(e.status)}</span>
+              <span class="service-client-arrow">›</span>
+            </a>
+          `;
+        }).join(''):emptyState('Nenhum cliente encontrado','Cadastre um cliente de decoração ou outro serviço para começar.')}
+      </div>
     </div>
   `;
 }
