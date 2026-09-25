@@ -570,6 +570,10 @@ function companyFinanceView(){
 
 function companyEventDetailView(id){
   const e = state.companyEvents.find(x=>x.id===id);
+  const fromServiceClients = route().startsWith('clientes-servicos/');
+  const clientMeetings = state.companyMeetings
+    .filter(m=>m.event_id===id)
+    .sort((a,b)=>(String(b.meeting_date)+String(b.meeting_time||'')).localeCompare(String(a.meeting_date)+String(a.meeting_time||'')));
   if(!e){
     return `<div class="page">${emptyState('Evento não encontrado','Volte ao calendário e selecione um evento.')}</div>`;
   }
@@ -591,7 +595,7 @@ function companyEventDetailView(id){
     <div class="page">
       <div class="page-head">
         <div>
-          <a class="link-btn" href="#/calendario-eventos">← Voltar ao calendário</a>
+          <a class="link-btn" href="${fromServiceClients?'#/clientes-servicos':'#/calendario-eventos'}">← ${fromServiceClients?'Voltar aos clientes':'Voltar ao calendário'}</a>
           <h1 style="margin-top:8px">${esc(e.client_name)}</h1>
           <div class="crm-inline-status ${crmStatusClass(e.status)}" style="display:inline-flex;margin-top:5px">
             ${esc(e.status)}
@@ -630,6 +634,32 @@ function companyEventDetailView(id){
             <div class="profit"><span>Lucro previsto</span><strong>${brl(profit)}</strong></div>
           </div>
           <p class="tiny muted">Custos consideram saídas e remuneração de staff vinculadas ao evento. O lucro previsto usa o valor contratado.</p>
+        </div>
+      </div>
+
+      <div class="card card-pad service-client-meetings">
+        <div class="card-title">
+          <div>
+            <h2>Reuniões e anotações</h2>
+            <span class="sub">Registre cada conversa, alinhamento e decisão deste cliente.</span>
+          </div>
+          <button class="btn-primary" id="new-client-meeting" data-event-id="${e.id}">+ Reunião / nota</button>
+        </div>
+        <div class="service-meeting-history">
+          ${clientMeetings.length?clientMeetings.map(m=>`
+            <div class="service-meeting-note">
+              <div class="meeting-date-small">
+                <strong>${String(m.meeting_date||'').slice(8,10)||'—'}</strong>
+                <span>${m.meeting_date?new Date(m.meeting_date+'T12:00:00').toLocaleDateString('pt-BR',{month:'short'}).replace('.','').toUpperCase():'—'}</span>
+              </div>
+              <div class="service-meeting-copy">
+                <strong>${esc(m.meeting_type||'Reunião')}</strong>
+                <span>${dateBR(m.meeting_date)}${m.meeting_time?' às '+timeBR(m.meeting_time):''}</span>
+                <p>${esc(m.notes||'Sem anotações registradas.')}</p>
+              </div>
+              <button class="btn-secondary" data-edit-company-meeting="${m.id}">Editar</button>
+            </div>
+          `).join(''):emptyState('Nenhuma reunião registrada','Use “+ Reunião / nota” para criar o histórico deste cliente.')}
         </div>
       </div>
 
