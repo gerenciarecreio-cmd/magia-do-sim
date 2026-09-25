@@ -9,7 +9,9 @@ Object.assign(state, {
   dashboardSector: state.dashboardSector || 'Todos',
   financeMonth: state.financeMonth || new Date().toISOString().slice(0,7),
   financeSector: state.financeSector || 'Todos',
-  eventCalendarMonth: state.eventCalendarMonth || new Date().toISOString().slice(0,7)
+  eventCalendarMonth: state.eventCalendarMonth || new Date().toISOString().slice(0,7),
+  serviceClientFilter: state.serviceClientFilter || 'Todos',
+  serviceClientSearch: state.serviceClientSearch || ''
 });
 
 const CRM_STATUSES = [
@@ -99,6 +101,8 @@ viewFor = function(r){
   if(state.role === 'admin'){
     if(r === 'dashboard-empresa') return companyDashboardView();
     if(r === 'crm') return crmView();
+    if(r === 'clientes-servicos') return serviceClientsView();
+    if(r.startsWith('clientes-servicos/')) return companyEventDetailView(r.split('/')[1]);
     if(r === 'agenda-comercial') return companyMeetingsView();
     if(r === 'calendario-eventos') return companyCalendarView();
     if(r === 'financeiro-empresa') return companyFinanceView();
@@ -114,6 +118,8 @@ render = function(){
     const adminOnly =
       r === 'dashboard-empresa' ||
       r === 'crm' ||
+      r === 'clientes-servicos' ||
+      r.startsWith('clientes-servicos/') ||
       r === 'agenda-comercial' ||
       r === 'calendario-eventos' ||
       r === 'financeiro-empresa' ||
@@ -131,12 +137,17 @@ shellView = function(r,content){
   let html = baseShellView(r,content);
   if(state.role !== 'admin') return html;
 
-  const active = r.startsWith('eventos/') ? 'calendario-eventos' : r;
+  const active = r.startsWith('eventos/')
+    ? 'calendario-eventos'
+    : r.startsWith('clientes-servicos/')
+      ? 'clientes-servicos'
+      : r;
   const adminMenu = `
     <div class="admin-company-nav">
       <div class="admin-nav-label">GESTÃO DA EMPRESA</div>
       <a href="#/dashboard-empresa" class="nav-item ${active==='dashboard-empresa'?'active':''}">${icons.admin}<span>Dashboard</span></a>
       <a href="#/crm" class="nav-item ${active==='crm'?'active':''}">${icons.users}<span>CRM</span></a>
+      <a href="#/clientes-servicos" class="nav-item ${active==='clientes-servicos'?'active':''}">${icons.users}<span>Clientes de serviços</span></a>
       <a href="#/agenda-comercial" class="nav-item ${active==='agenda-comercial'?'active':''}">${icons.meeting}<span>Agenda reuniões</span></a>
       <a href="#/calendario-eventos" class="nav-item ${active==='calendario-eventos'?'active':''}">${icons.calendar}<span>Calendário eventos</span></a>
       <a href="#/financeiro-empresa" class="nav-item ${active==='financeiro-empresa'?'active':''}">${icons.money}<span>Financeiro empresa</span></a>
@@ -325,6 +336,55 @@ function crmView(){
   `;
 }
 
+
+function serviceClientsView(){
+  const search=String(state.serviceClientSearch||'').trim().toLowerCase();
+  const items=state.companyEvents
+    .filter(e=>state.serviceClientFilter==='Todos'||e.service_sector===state.serviceClientFilter)
+    .filter(e=>!search||[e.client_name,e.phone,e.venue,e.service_sector,e.notes].some(v=>String(v||'').toLowerCase().includes(search)))
+    .sort((a,b)=>String(a.event_date||'9999-12-31').localeCompare(String(b.event_date||'9999-12-31'))||String(a.client_name||'').localeCompare(String(b.client_name||'')));
+  const today=new Date().toISOString().slice(0,10);
+  const upcoming=[...state.companyMeetings].filter(m=>m.meeting_date>=today).sort((a,b)=>(String(a.meeting_date)+String(a.meeting_time||'')).localeCompare(String(b.meeting_date)+String(b.meeting_time||'')));
+  return `
+    <div class="page service-clients-page">
+      <div class="page-head">
+        <div>
+          <h1>Clientes de serviços</h1>
+          <p>Gerencie clientes de decoração e outros serviços, com evento, reuniões e anotações no mesmo lugar.</p>
+        </div>
+        <button class="btn-primary" id="new-service-client">+ Novo cliente</button>
+      </div>
+      <div class="service-client-kpis">
+        <div class="card service-client-kpi"><span>Cadastros</span><strong>${state.companyEvents.length}</strong><small>clientes e oportunidades</small></div>
+        <div class="card service-client-kpi"><span>Decoração</span><strong>${state.companyEvents.filter(e=>e.service_sector==='Decoração').length}</strong><small>cadastros deste serviço</small></div>
+        <div class="card service-client-kpi"><span>Fechados</span><strong>${state.companyEvents.filter(e=>isClosedLead(e.status)).length}</strong><small>clientes confirmados</small></div>
+        <div class="card service-client-kpi"><span>Próxima reunião</span><strong class="service-next-meeting">${upcoming[0]?dateBR(upcoming[0].meeting_date):'—'}</strong><small>${upcoming[0]?esc(upcoming[0].client_name):'nenhuma agendada'}</small></div>
+      </div>
+      <div class="service-client-tools">
+        <input class="input" id="service-client-search" type="search" placeholder="Buscar cliente, telefone ou local..." value="${esc(state.serviceClientSearch)}">
+        <div class="filters service-client-filters">
+          ${['Todos',...COMPANY_SECTORS].map(s=>`<button class="filter-btn ${state.serviceClientFilter===s?'active':''}" data-service-client-filter="${esc(s)}">${esc(s)}</button>`).join('')}
+        </div>
+      </div>
+      <div class="card service-client-list">
+        ${items.length?items.map(e=>{
+          const meetings=state.companyMeetings.filter(m=>m.event_id===e.id&&m.meeting_date>=today).sort((a,b)=>(String(a.meeting_date)+String(a.meeting_time||'')).localeCompare(String(b.meeting_date)+String(b.meeting_time||'')));
+          return `
+            <a href="#/clientes-servicos/${e.id}" class="service-client-row">
+              <div class="service-client-avatar">${esc((e.client_name||'C')[0].toUpperCase())}</div>
+              <div class="service-client-main"><strong>${esc(e.client_name)}</strong><span>${esc(e.service_sector)} • ${esc(e.phone||'sem telefone')}</span></div>
+              <div class="service-client-date"><span>Evento</span><strong>${e.event_date?dateBR(e.event_date):'A definir'}</strong></div>
+              <div class="service-client-date"><span>Próxima reunião</span><strong>${meetings[0]?dateBR(meetings[0].meeting_date):'—'}</strong></div>
+              <span class="crm-inline-status ${crmStatusClass(e.status)}">${esc(e.status)}</span>
+              <span class="service-client-arrow">›</span>
+            </a>
+          `;
+        }).join(''):emptyState('Nenhum cliente encontrado','Cadastre um cliente de decoração ou outro serviço para começar.')}
+      </div>
+    </div>
+  `;
+}
+
 function companyMeetingsView(){
   const today = new Date().toISOString().slice(0,10);
   const items = [...state.companyMeetings].sort((a,b)=>
@@ -385,6 +445,7 @@ function companyCalendarView(){
     const iso =
       `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const events = state.companyEvents.filter(e=>e.event_date===iso);
+    const meetings = state.companyMeetings.filter(m=>m.meeting_date===iso);
 
     cells.push(`
       <div class="company-calendar-day ${d.getMonth()!==month-1?'outside':''}">
@@ -397,6 +458,14 @@ function companyCalendarView(){
               <small>${e.event_time?timeBR(e.event_time)+' • ':''}${esc(e.service_sector)}</small>
             </button>
           `).join('')}
+          ${meetings.map(m=>`
+            <button class="company-calendar-event company-calendar-meeting"
+              ${m.event_id?`data-open-service-client="${m.event_id}"`:`data-edit-company-meeting="${m.id}"`}>
+              <strong>Reunião • ${esc(m.client_name)}</strong>
+              <span>${esc(m.meeting_type||'Reunião')}</span>
+              <small>${m.meeting_time?timeBR(m.meeting_time):'horário a definir'}</small>
+            </button>
+          `).join('')}
         </div>
       </div>
     `);
@@ -407,7 +476,7 @@ function companyCalendarView(){
       <div class="page-head">
         <div>
           <h1>Calendário de eventos</h1>
-          <p>Os clientes aparecem mesmo antes do fechamento. Vermelho = em negociação; verde = fechado.</p>
+          <p>Eventos e reuniões dos seus clientes no mesmo calendário. Verde = fechado; vermelho = em negociação.</p>
         </div>
         <button class="btn-primary" id="new-lead">+ Novo evento/lead</button>
       </div>
@@ -423,6 +492,7 @@ function companyCalendarView(){
           <div class="calendar-legend">
             <span><i class="crm-open"></i>Não fechado</span>
             <span><i class="crm-closed"></i>Fechado</span>
+            <span><i class="calendar-meeting-dot"></i>Reunião</span>
           </div>
         </div>
 
@@ -500,6 +570,10 @@ function companyFinanceView(){
 
 function companyEventDetailView(id){
   const e = state.companyEvents.find(x=>x.id===id);
+  const fromServiceClients = route().startsWith('clientes-servicos/');
+  const clientMeetings = state.companyMeetings
+    .filter(m=>m.event_id===id)
+    .sort((a,b)=>(String(b.meeting_date)+String(b.meeting_time||'')).localeCompare(String(a.meeting_date)+String(a.meeting_time||'')));
   if(!e){
     return `<div class="page">${emptyState('Evento não encontrado','Volte ao calendário e selecione um evento.')}</div>`;
   }
@@ -521,7 +595,7 @@ function companyEventDetailView(id){
     <div class="page">
       <div class="page-head">
         <div>
-          <a class="link-btn" href="#/calendario-eventos">← Voltar ao calendário</a>
+          <a class="link-btn" href="${fromServiceClients?'#/clientes-servicos':'#/calendario-eventos'}">← ${fromServiceClients?'Voltar aos clientes':'Voltar ao calendário'}</a>
           <h1 style="margin-top:8px">${esc(e.client_name)}</h1>
           <div class="crm-inline-status ${crmStatusClass(e.status)}" style="display:inline-flex;margin-top:5px">
             ${esc(e.status)}
@@ -560,6 +634,32 @@ function companyEventDetailView(id){
             <div class="profit"><span>Lucro previsto</span><strong>${brl(profit)}</strong></div>
           </div>
           <p class="tiny muted">Custos consideram saídas e remuneração de staff vinculadas ao evento. O lucro previsto usa o valor contratado.</p>
+        </div>
+      </div>
+
+      <div class="card card-pad service-client-meetings">
+        <div class="card-title">
+          <div>
+            <h2>Reuniões e anotações</h2>
+            <span class="sub">Registre cada conversa, alinhamento e decisão deste cliente.</span>
+          </div>
+          <button class="btn-primary" id="new-client-meeting" data-event-id="${e.id}">+ Reunião / nota</button>
+        </div>
+        <div class="service-meeting-history">
+          ${clientMeetings.length?clientMeetings.map(m=>`
+            <div class="service-meeting-note">
+              <div class="meeting-date-small">
+                <strong>${String(m.meeting_date||'').slice(8,10)||'—'}</strong>
+                <span>${m.meeting_date?new Date(m.meeting_date+'T12:00:00').toLocaleDateString('pt-BR',{month:'short'}).replace('.','').toUpperCase():'—'}</span>
+              </div>
+              <div class="service-meeting-copy">
+                <strong>${esc(m.meeting_type||'Reunião')}</strong>
+                <span>${dateBR(m.meeting_date)}${m.meeting_time?' às '+timeBR(m.meeting_time):''}</span>
+                <p>${esc(m.notes||'Sem anotações registradas.')}</p>
+              </div>
+              <button class="btn-secondary" data-edit-company-meeting="${m.id}">Editar</button>
+            </div>
+          `).join(''):emptyState('Nenhuma reunião registrada','Use “+ Reunião / nota” para criar o histórico deste cliente.')}
         </div>
       </div>
 
@@ -608,7 +708,8 @@ function companyEventDetailView(id){
   `;
 }
 
-function openCompanyEventEditor(e){
+function openCompanyEventEditor(e,asServiceClient=false){
+  const serviceClientMode = asServiceClient || route().startsWith('clientes-servicos');
   const body =
     field('Nome do cliente','client_name',e?.client_name||'') +
     field('Telefone','phone',e?.phone||'') +
@@ -624,7 +725,11 @@ function openCompanyEventEditor(e){
       <textarea class="input" style="padding:13px;min-height:100px" name="notes">${esc(e?.notes||'')}</textarea>
     </div>`;
 
-  modal(e?'Editar cliente/evento':'Novo lead',body,e?'Salvar':'Cadastrar',async back=>{
+  modal(
+    e?(serviceClientMode?'Editar cliente de serviço':'Editar cliente/evento'):(serviceClientMode?'Novo cliente de serviço':'Novo lead'),
+    body,
+    e?'Salvar':'Cadastrar',
+    async back=>{
     const f = Object.fromEntries(new FormData(back.querySelector('.modal')).entries());
     const payload = {
       client_name: String(f.client_name||'').trim(),
@@ -658,13 +763,13 @@ function openCompanyEventEditor(e){
     if(state.selectedCompanyEventId){
       await loadCompanyEventDocuments(state.selectedCompanyEventId);
     }
-    toast(e?'Cadastro atualizado.':'Lead cadastrado.');
+    toast(e?'Cadastro atualizado.':(serviceClientMode?'Cliente cadastrado.':'Lead cadastrado.'));
     render();
     return true;
   });
 }
 
-function openCompanyMeetingEditor(m){
+function openCompanyMeetingEditor(m,preselectedEventId=''){
   const eventOptions = [{value:'',label:'Sem vínculo'}]
     .concat(state.companyEvents.map(e=>({
       value:e.id,
@@ -672,8 +777,8 @@ function openCompanyMeetingEditor(m){
     })));
 
   const body =
-    selectField('Cliente/evento','event_id',eventOptions,m?.event_id||'') +
-    field('Nome do cliente','client_name',m?.client_name||'') +
+    selectField('Cliente/evento','event_id',eventOptions,m?.event_id||preselectedEventId||'') +
+    field('Nome do cliente','client_name',m?.client_name||state.companyEvents.find(e=>e.id===preselectedEventId)?.client_name||'') +
     field('Data','meeting_date',m?.meeting_date||'','date') +
     field('Horário','meeting_time',(m?.meeting_time||'').slice(0,5),'time') +
     field('Tipo de reunião','meeting_type',m?.meeting_type||'Reunião comercial') +
@@ -850,6 +955,31 @@ bindView = function(r){
   const newLead = document.getElementById('new-lead');
   if(newLead) newLead.onclick = ()=>openCompanyEventEditor(null);
 
+  const newServiceClient = document.getElementById('new-service-client');
+  if(newServiceClient) newServiceClient.onclick = ()=>openCompanyEventEditor(null,true);
+
+  const serviceSearch = document.getElementById('service-client-search');
+  if(serviceSearch){
+    serviceSearch.onchange = ()=>{
+      state.serviceClientSearch = serviceSearch.value;
+      render();
+    };
+  }
+
+  document.querySelectorAll('[data-service-client-filter]').forEach(b=>{
+    b.onclick=()=>{
+      state.serviceClientFilter=b.dataset.serviceClientFilter;
+      render();
+    };
+  });
+
+  document.querySelectorAll('[data-open-service-client]').forEach(b=>{
+    b.onclick=()=>{
+      goto('clientes-servicos/'+b.dataset.openServiceClient);
+      render();
+    };
+  });
+
   document.querySelectorAll('[data-edit-company-event]').forEach(b=>{
     b.onclick = ()=>openCompanyEventEditor(
       state.companyEvents.find(e=>e.id===b.dataset.editCompanyEvent)
@@ -875,6 +1005,9 @@ bindView = function(r){
 
   const newMeeting = document.getElementById('new-company-meeting');
   if(newMeeting) newMeeting.onclick = ()=>openCompanyMeetingEditor(null);
+
+  const newClientMeeting = document.getElementById('new-client-meeting');
+  if(newClientMeeting) newClientMeeting.onclick = ()=>openCompanyMeetingEditor(null,newClientMeeting.dataset.eventId||'');
 
   document.querySelectorAll('[data-edit-company-meeting]').forEach(b=>{
     b.onclick = ()=>openCompanyMeetingEditor(

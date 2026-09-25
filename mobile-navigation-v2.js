@@ -3,6 +3,7 @@
   function mobileRouteKey(r){
     if(r.startsWith('fornecedores/')) return 'fornecedores';
     if(r.startsWith('eventos/')) return 'calendario-eventos';
+    if(r.startsWith('clientes-servicos/')) return 'clientes-servicos';
     return r;
   }
 
@@ -74,6 +75,7 @@
         {
           title:'Gestão da empresa',
           items:[
+            ['clientes-servicos','Clientes de serviços','users'],
             ['agenda-comercial','Agenda de reuniões','meeting'],
             ['financeiro-empresa','Financeiro da empresa','money'],
             ['cadastros-gerais','Cadastros gerais','users'],

@@ -485,3 +485,64 @@
   margin-top:14px;
   padding-bottom:16px;
 }
+
+
+/* Clientes de serviços */
+.service-client-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.service-client-kpi{padding:16px;display:grid;gap:4px}
+.service-client-kpi span{color:var(--muted);font-size:10px}
+.service-client-kpi strong{color:var(--brown);font-family:"Playfair Display",serif;font-size:28px;font-weight:600}
+.service-client-kpi small{color:var(--muted);font-size:8px}
+.service-client-kpi .service-next-meeting{font-size:20px}
+.service-client-tools{display:grid;grid-template-columns:minmax(260px,420px) minmax(0,1fr);gap:12px;align-items:center;margin-bottom:12px}
+.service-client-tools .input{padding-left:13px}
+.service-client-tools .filters{margin:0;justify-content:flex-end}
+.service-client-list{overflow:hidden}
+.service-client-row{display:grid;grid-template-columns:42px minmax(0,1.5fr) 110px 120px 170px 18px;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);color:inherit}
+.service-client-row:last-child{border-bottom:0}
+.service-client-row:hover{background:rgba(238,227,210,.22)}
+.service-client-avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:#efe5d7;color:var(--brown);font-family:"Playfair Display",serif;font-size:17px}
+.service-client-main{min-width:0;display:grid;gap:3px}
+.service-client-main strong{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px}
+.service-client-main span,.service-client-date span{color:var(--muted);font-size:8px}
+.service-client-date{display:grid;gap:3px}
+.service-client-date strong{font-size:10px;color:var(--ink)}
+.service-client-arrow{color:var(--muted);font-size:19px}
+.company-calendar-event.company-calendar-meeting{background:#eee8d8;border-left-color:#826c42;color:#6c5735}
+.calendar-meeting-dot{background:#826c42}
+.service-client-meetings{margin-top:18px}
+.service-client-meetings .card-title{align-items:flex-start}
+.service-client-meetings .card-title>div{display:grid;gap:3px}
+.service-meeting-history{display:grid}
+.service-meeting-note{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line)}
+.service-meeting-note:last-child{border-bottom:0}
+.service-meeting-copy{min-width:0;display:grid;gap:3px}
+.service-meeting-copy>strong{color:var(--brown);font-size:11px}
+.service-meeting-copy>span{color:var(--muted);font-size:8px}
+.service-meeting-copy p{margin:5px 0 0;color:var(--ink);font-size:10px;line-height:1.5;white-space:pre-wrap}
+
+@media(max-width:1100px){
+  .service-client-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .service-client-row{grid-template-columns:40px minmax(0,1fr) 105px 160px 18px}
+  .service-client-row .service-client-date:nth-of-type(2){display:none}
+}
+@media(max-width:820px){
+  .service-client-kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .service-client-kpi{padding:12px}
+  .service-client-kpi strong{font-size:23px}
+  .service-client-kpi .service-next-meeting{font-size:17px}
+  .service-client-tools{grid-template-columns:1fr}
+  .service-client-tools .filters{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .service-client-tools .filters::-webkit-scrollbar{display:none}
+  .service-client-row{grid-template-columns:38px minmax(0,1fr) 18px;gap:9px;padding:11px 10px}
+  .service-client-row .service-client-date,.service-client-row .crm-inline-status{grid-column:2}
+  .service-client-row .service-client-date{display:grid!important}
+  .service-client-row .service-client-date:nth-of-type(2){display:none!important}
+  .service-client-row .crm-inline-status{width:max-content;max-width:100%}
+  .service-client-arrow{grid-column:3;grid-row:1 / span 3;align-self:center}
+  .service-client-meetings .card-title{display:grid;grid-template-columns:1fr}
+  .service-client-meetings .card-title .btn-primary{width:100%}
+  .service-meeting-note{grid-template-columns:44px minmax(0,1fr);gap:9px}
+  .service-meeting-note>.btn-secondary{grid-column:2;justify-self:start;min-height:38px}
+}
+@media(max-width:390px){.service-client-kpis{grid-template-columns:1fr}}
