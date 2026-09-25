@@ -708,7 +708,8 @@ function companyEventDetailView(id){
   `;
 }
 
-function openCompanyEventEditor(e){
+function openCompanyEventEditor(e,asServiceClient=false){
+  const serviceClientMode = asServiceClient || route().startsWith('clientes-servicos');
   const body =
     field('Nome do cliente','client_name',e?.client_name||'') +
     field('Telefone','phone',e?.phone||'') +
@@ -724,7 +725,11 @@ function openCompanyEventEditor(e){
       <textarea class="input" style="padding:13px;min-height:100px" name="notes">${esc(e?.notes||'')}</textarea>
     </div>`;
 
-  modal(e?'Editar cliente/evento':'Novo lead',body,e?'Salvar':'Cadastrar',async back=>{
+  modal(
+    e?(serviceClientMode?'Editar cliente de serviço':'Editar cliente/evento'):(serviceClientMode?'Novo cliente de serviço':'Novo lead'),
+    body,
+    e?'Salvar':'Cadastrar',
+    async back=>{
     const f = Object.fromEntries(new FormData(back.querySelector('.modal')).entries());
     const payload = {
       client_name: String(f.client_name||'').trim(),
@@ -758,13 +763,13 @@ function openCompanyEventEditor(e){
     if(state.selectedCompanyEventId){
       await loadCompanyEventDocuments(state.selectedCompanyEventId);
     }
-    toast(e?'Cadastro atualizado.':'Lead cadastrado.');
+    toast(e?'Cadastro atualizado.':(serviceClientMode?'Cliente cadastrado.':'Lead cadastrado.'));
     render();
     return true;
   });
 }
 
-function openCompanyMeetingEditor(m){
+function openCompanyMeetingEditor(m,preselectedEventId=''){
   const eventOptions = [{value:'',label:'Sem vínculo'}]
     .concat(state.companyEvents.map(e=>({
       value:e.id,
@@ -772,8 +777,8 @@ function openCompanyMeetingEditor(m){
     })));
 
   const body =
-    selectField('Cliente/evento','event_id',eventOptions,m?.event_id||'') +
-    field('Nome do cliente','client_name',m?.client_name||'') +
+    selectField('Cliente/evento','event_id',eventOptions,m?.event_id||preselectedEventId||'') +
+    field('Nome do cliente','client_name',m?.client_name||state.companyEvents.find(e=>e.id===preselectedEventId)?.client_name||'') +
     field('Data','meeting_date',m?.meeting_date||'','date') +
     field('Horário','meeting_time',(m?.meeting_time||'').slice(0,5),'time') +
     field('Tipo de reunião','meeting_type',m?.meeting_type||'Reunião comercial') +
@@ -950,6 +955,31 @@ bindView = function(r){
   const newLead = document.getElementById('new-lead');
   if(newLead) newLead.onclick = ()=>openCompanyEventEditor(null);
 
+  const newServiceClient = document.getElementById('new-service-client');
+  if(newServiceClient) newServiceClient.onclick = ()=>openCompanyEventEditor(null,true);
+
+  const serviceSearch = document.getElementById('service-client-search');
+  if(serviceSearch){
+    serviceSearch.onchange = ()=>{
+      state.serviceClientSearch = serviceSearch.value;
+      render();
+    };
+  }
+
+  document.querySelectorAll('[data-service-client-filter]').forEach(b=>{
+    b.onclick=()=>{
+      state.serviceClientFilter=b.dataset.serviceClientFilter;
+      render();
+    };
+  });
+
+  document.querySelectorAll('[data-open-service-client]').forEach(b=>{
+    b.onclick=()=>{
+      goto('clientes-servicos/'+b.dataset.openServiceClient);
+      render();
+    };
+  });
+
   document.querySelectorAll('[data-edit-company-event]').forEach(b=>{
     b.onclick = ()=>openCompanyEventEditor(
       state.companyEvents.find(e=>e.id===b.dataset.editCompanyEvent)
@@ -975,6 +1005,9 @@ bindView = function(r){
 
   const newMeeting = document.getElementById('new-company-meeting');
   if(newMeeting) newMeeting.onclick = ()=>openCompanyMeetingEditor(null);
+
+  const newClientMeeting = document.getElementById('new-client-meeting');
+  if(newClientMeeting) newClientMeeting.onclick = ()=>openCompanyMeetingEditor(null,newClientMeeting.dataset.eventId||'');
 
   document.querySelectorAll('[data-edit-company-meeting]').forEach(b=>{
     b.onclick = ()=>openCompanyMeetingEditor(
