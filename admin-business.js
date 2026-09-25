@@ -445,6 +445,7 @@ function companyCalendarView(){
     const iso =
       `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const events = state.companyEvents.filter(e=>e.event_date===iso);
+    const meetings = state.companyMeetings.filter(m=>m.meeting_date===iso);
 
     cells.push(`
       <div class="company-calendar-day ${d.getMonth()!==month-1?'outside':''}">
@@ -457,6 +458,14 @@ function companyCalendarView(){
               <small>${e.event_time?timeBR(e.event_time)+' • ':''}${esc(e.service_sector)}</small>
             </button>
           `).join('')}
+          ${meetings.map(m=>`
+            <button class="company-calendar-event company-calendar-meeting"
+              ${m.event_id?`data-open-service-client="${m.event_id}"`:`data-edit-company-meeting="${m.id}"`}>
+              <strong>Reunião • ${esc(m.client_name)}</strong>
+              <span>${esc(m.meeting_type||'Reunião')}</span>
+              <small>${m.meeting_time?timeBR(m.meeting_time):'horário a definir'}</small>
+            </button>
+          `).join('')}
         </div>
       </div>
     `);
@@ -467,7 +476,7 @@ function companyCalendarView(){
       <div class="page-head">
         <div>
           <h1>Calendário de eventos</h1>
-          <p>Os clientes aparecem mesmo antes do fechamento. Vermelho = em negociação; verde = fechado.</p>
+          <p>Eventos e reuniões dos seus clientes no mesmo calendário. Verde = fechado; vermelho = em negociação.</p>
         </div>
         <button class="btn-primary" id="new-lead">+ Novo evento/lead</button>
       </div>
@@ -483,6 +492,7 @@ function companyCalendarView(){
           <div class="calendar-legend">
             <span><i class="crm-open"></i>Não fechado</span>
             <span><i class="crm-closed"></i>Fechado</span>
+            <span><i class="calendar-meeting-dot"></i>Reunião</span>
           </div>
         </div>
 
