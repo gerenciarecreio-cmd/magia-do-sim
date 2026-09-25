@@ -11,7 +11,9 @@ Object.assign(state, {
   financeSector: state.financeSector || 'Todos',
   eventCalendarMonth: state.eventCalendarMonth || new Date().toISOString().slice(0,7),
   serviceClientFilter: state.serviceClientFilter || 'Todos',
-  serviceClientSearch: state.serviceClientSearch || ''
+  serviceClientSearch: state.serviceClientSearch || '',
+  serviceDashboardMonth: state.serviceDashboardMonth || 'Todos',
+  serviceDashboardYear: state.serviceDashboardYear || String(new Date().getFullYear())
 });
 
 const CRM_STATUSES = [
@@ -339,12 +341,80 @@ function crmView(){
 
 function serviceClientsView(){
   const search=String(state.serviceClientSearch||'').trim().toLowerCase();
-  const items=state.companyEvents
-    .filter(e=>state.serviceClientFilter==='Todos'||e.service_sector===state.serviceClientFilter)
+  const today=new Date().toISOString().slice(0,10);
+  const selectedSector=state.serviceClientFilter;
+
+  const allServiceEvents=state.companyEvents
+    .filter(e=>selectedSector==='Todos'||e.service_sector===selectedSector);
+
+  const years=[...new Set([
+    String(new Date().getFullYear()),
+    ...state.companyEvents.map(e=>String(e.event_date||'').slice(0,4)).filter(Boolean),
+    ...state.companyMeetings.map(m=>String(m.meeting_date||'').slice(0,4)).filter(Boolean),
+    ...state.financialEntries.map(x=>String(x.entry_date||'').slice(0,4)).filter(Boolean)
+  ])].sort((a,b)=>Number(b)-Number(a));
+
+  const matchPeriod=dateValue=>{
+    if(!dateValue) return false;
+    const raw=String(dateValue);
+    const y=raw.slice(0,4);
+    const m=raw.slice(5,7);
+    const yearOk=state.serviceDashboardYear==='Todos'||y===state.serviceDashboardYear;
+    const monthOk=state.serviceDashboardMonth==='Todos'||m===state.serviceDashboardMonth;
+    return yearOk&&monthOk;
+  };
+
+  const periodEvents=allServiceEvents.filter(e=>matchPeriod(e.event_date));
+  const periodEventIds=new Set(periodEvents.map(e=>e.id));
+  const allSelectedEventIds=new Set(allServiceEvents.map(e=>e.id));
+
+  const closedEvents=periodEvents.filter(e=>isClosedLead(e.status));
+  const contracted=periodEvents.reduce((s,e)=>s+moneyNumber(e.contracted_value),0);
+
+  const receivedInPeriod=state.financialEntries
+    .filter(x=>
+      allSelectedEventIds.has(x.event_id) &&
+      x.entry_type==='Entrada' &&
+      x.status==='Recebido' &&
+      matchPeriod(x.entry_date)
+    )
+    .reduce((s,x)=>s+moneyNumber(x.amount),0);
+
+  const receivedForPeriodEvents=state.financialEntries
+    .filter(x=>
+      periodEventIds.has(x.event_id) &&
+      x.entry_type==='Entrada' &&
+      x.status==='Recebido'
+    )
+    .reduce((s,x)=>s+moneyNumber(x.amount),0);
+
+  const receivable=Math.max(contracted-receivedForPeriodEvents,0);
+
+  const meetingsInPeriod=state.companyMeetings.filter(m=>{
+    const event=state.companyEvents.find(e=>e.id===m.event_id);
+    const sectorOk=!event||selectedSector==='Todos'||event.service_sector===selectedSector;
+    return sectorOk&&matchPeriod(m.meeting_date);
+  });
+
+  const upcoming=[...state.companyMeetings]
+    .filter(m=>{
+      const event=state.companyEvents.find(e=>e.id===m.event_id);
+      const sectorOk=!event||selectedSector==='Todos'||event.service_sector===selectedSector;
+      return sectorOk&&m.meeting_date>=today;
+    })
+    .sort((a,b)=>(String(a.meeting_date)+String(a.meeting_time||'')).localeCompare(String(b.meeting_date)+String(b.meeting_time||'')));
+
+  const items=allServiceEvents
     .filter(e=>!search||[e.client_name,e.phone,e.venue,e.service_sector,e.notes].some(v=>String(v||'').toLowerCase().includes(search)))
     .sort((a,b)=>String(a.event_date||'9999-12-31').localeCompare(String(b.event_date||'9999-12-31'))||String(a.client_name||'').localeCompare(String(b.client_name||'')));
-  const today=new Date().toISOString().slice(0,10);
-  const upcoming=[...state.companyMeetings].filter(m=>m.meeting_date>=today).sort((a,b)=>(String(a.meeting_date)+String(a.meeting_time||'')).localeCompare(String(b.meeting_date)+String(b.meeting_time||'')));
+
+  const monthOptions=[
+    ['Todos','Todos os meses'],
+    ['01','Janeiro'],['02','Fevereiro'],['03','Março'],['04','Abril'],
+    ['05','Maio'],['06','Junho'],['07','Julho'],['08','Agosto'],
+    ['09','Setembro'],['10','Outubro'],['11','Novembro'],['12','Dezembro']
+  ];
+
   return `
     <div class="page service-clients-page">
       <div class="page-head">
@@ -354,18 +424,72 @@ function serviceClientsView(){
         </div>
         <button class="btn-primary" id="new-service-client">+ Novo cliente</button>
       </div>
-      <div class="service-client-kpis">
-        <div class="card service-client-kpi"><span>Cadastros</span><strong>${state.companyEvents.length}</strong><small>clientes e oportunidades</small></div>
-        <div class="card service-client-kpi"><span>Decoração</span><strong>${state.companyEvents.filter(e=>e.service_sector==='Decoração').length}</strong><small>cadastros deste serviço</small></div>
-        <div class="card service-client-kpi"><span>Fechados</span><strong>${state.companyEvents.filter(e=>isClosedLead(e.status)).length}</strong><small>clientes confirmados</small></div>
-        <div class="card service-client-kpi"><span>Próxima reunião</span><strong class="service-next-meeting">${upcoming[0]?dateBR(upcoming[0].meeting_date):'—'}</strong><small>${upcoming[0]?esc(upcoming[0].client_name):'nenhuma agendada'}</small></div>
-      </div>
+
+      <section class="service-dashboard">
+        <div class="service-dashboard-head">
+          <div>
+            <span class="service-dashboard-eyebrow">DASHBOARD DE SERVIÇOS</span>
+            <h2>Visão do período</h2>
+            <p>Indicadores apenas dos clientes cadastrados nesta área.</p>
+          </div>
+          <div class="service-dashboard-filters">
+            <div class="field compact-field">
+              <label>Mês</label>
+              <select class="input" id="service-dashboard-month">
+                ${monthOptions.map(([value,label])=>`<option value="${value}" ${state.serviceDashboardMonth===value?'selected':''}>${label}</option>`).join('')}
+              </select>
+            </div>
+            <div class="field compact-field">
+              <label>Ano</label>
+              <select class="input" id="service-dashboard-year">
+                <option value="Todos" ${state.serviceDashboardYear==='Todos'?'selected':''}>Todos os anos</option>
+                ${years.map(y=>`<option value="${y}" ${state.serviceDashboardYear===y?'selected':''}>${y}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="service-dashboard-kpis">
+          <div class="card service-dashboard-kpi">
+            <span>Clientes no período</span>
+            <strong>${periodEvents.length}</strong>
+            <small>${selectedSector==='Todos'?'todos os serviços':esc(selectedSector)}</small>
+          </div>
+          <div class="card service-dashboard-kpi">
+            <span>Fechados</span>
+            <strong>${closedEvents.length}</strong>
+            <small>eventos confirmados</small>
+          </div>
+          <div class="card service-dashboard-kpi money">
+            <span>Valor contratado</span>
+            <strong>${brl(contracted)}</strong>
+            <small>contratos dos eventos do período</small>
+          </div>
+          <div class="card service-dashboard-kpi money">
+            <span>Recebido no período</span>
+            <strong>${brl(receivedInPeriod)}</strong>
+            <small>entradas recebidas no mês/ano</small>
+          </div>
+          <div class="card service-dashboard-kpi money">
+            <span>A receber</span>
+            <strong>${brl(receivable)}</strong>
+            <small>saldo dos eventos do período</small>
+          </div>
+          <div class="card service-dashboard-kpi">
+            <span>Reuniões no período</span>
+            <strong>${meetingsInPeriod.length}</strong>
+            <small>${upcoming[0]?'próxima: '+dateBR(upcoming[0].meeting_date):'nenhuma próxima reunião'}</small>
+          </div>
+        </div>
+      </section>
+
       <div class="service-client-tools">
         <input class="input" id="service-client-search" type="search" placeholder="Buscar cliente, telefone ou local..." value="${esc(state.serviceClientSearch)}">
         <div class="filters service-client-filters">
           ${['Todos',...COMPANY_SECTORS].map(s=>`<button class="filter-btn ${state.serviceClientFilter===s?'active':''}" data-service-client-filter="${esc(s)}">${esc(s)}</button>`).join('')}
         </div>
       </div>
+
       <div class="card service-client-list">
         ${items.length?items.map(e=>{
           const meetings=state.companyMeetings.filter(m=>m.event_id===e.id&&m.meeting_date>=today).sort((a,b)=>(String(a.meeting_date)+String(a.meeting_time||'')).localeCompare(String(b.meeting_date)+String(b.meeting_time||'')));
@@ -972,6 +1096,22 @@ bindView = function(r){
       render();
     };
   });
+
+  const serviceDashboardMonth=document.getElementById('service-dashboard-month');
+  if(serviceDashboardMonth){
+    serviceDashboardMonth.onchange=()=>{
+      state.serviceDashboardMonth=serviceDashboardMonth.value;
+      render();
+    };
+  }
+
+  const serviceDashboardYear=document.getElementById('service-dashboard-year');
+  if(serviceDashboardYear){
+    serviceDashboardYear.onchange=()=>{
+      state.serviceDashboardYear=serviceDashboardYear.value;
+      render();
+    };
+  }
 
   document.querySelectorAll('[data-open-service-client]').forEach(b=>{
     b.onclick=()=>{
