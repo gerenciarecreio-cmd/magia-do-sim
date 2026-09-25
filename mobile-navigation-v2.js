@@ -74,6 +74,7 @@
         {
           title:'Gestão da empresa',
           items:[
+            ['clientes-servicos','Clientes de serviços','users'],
             ['agenda-comercial','Agenda de reuniões','meeting'],
             ['financeiro-empresa','Financeiro da empresa','money'],
             ['cadastros-gerais','Cadastros gerais','users'],
