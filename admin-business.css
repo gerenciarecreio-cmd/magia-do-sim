@@ -29,6 +29,17 @@
   gap:14px;
   margin-bottom:18px;
 }
+.finance-section-title{
+  margin:20px 0 12px;
+  font-size:17px;
+  color:var(--brown);
+}
+.finance-forecast{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.company-money-kpi strong.negative-balance{
+  color:#a93636;
+}
 .company-money-kpi{
   padding:20px;
   display:flex;

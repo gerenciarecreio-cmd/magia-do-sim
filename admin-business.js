@@ -6,8 +6,10 @@ Object.assign(state, {
   eventDocuments: state.eventDocuments || [],
   selectedCompanyEventId: state.selectedCompanyEventId || null,
   dashboardMonth: state.dashboardMonth || new Date().toISOString().slice(0,7),
+  dashboardYear: state.dashboardYear || String(new Date().getFullYear()),
   dashboardSector: state.dashboardSector || 'Todos',
   financeMonth: state.financeMonth || new Date().toISOString().slice(0,7),
+  financeYear: state.financeYear || String(new Date().getFullYear()),
   financeSector: state.financeSector || 'Todos',
   eventCalendarMonth: state.eventCalendarMonth || new Date().toISOString().slice(0,7),
   serviceClientFilter: state.serviceClientFilter || 'Todos',
@@ -158,9 +160,14 @@ shellView = function(r,content){
   return html.replace('<div class="sidebar-bottom">', adminMenu + '<div class="sidebar-bottom">');
 };
 
-function filteredCompanyFinance(month, sector){
+function companyPeriodMatches(date, month, year){
+  const key = monthKeyFromDate(date);
+  return (!year || key.slice(0,4) === year) && (!month || month === 'Todos' || key.slice(5,7) === month.slice(-2));
+}
+
+function filteredCompanyFinance(month, sector, year){
   return state.financialEntries.filter(x =>
-    (!month || monthKeyFromDate(x.entry_date) === month) &&
+    companyPeriodMatches(x.entry_date,month,year) &&
     sectorMatches(x,sector)
   );
 }
@@ -178,18 +185,42 @@ function companyFinanceTotals(entries){
     .filter(x => x.entry_type === 'Remuneração staff' && x.status === 'Pago')
     .reduce((s,x)=>s+moneyNumber(x.amount),0);
 
-  return {revenue,expenses,staff,net:revenue-expenses-staff};
+  const expectedIncome = entries
+    .filter(x => x.entry_type === 'Entrada' && (x.status === 'Pendente' || x.status === 'Previsto'))
+    .reduce((s,x)=>s+moneyNumber(x.amount),0);
+  const expectedCosts = entries
+    .filter(x => (x.entry_type === 'Saída' || x.entry_type === 'Remuneração staff') && (x.status === 'Pendente' || x.status === 'Previsto'))
+    .reduce((s,x)=>s+moneyNumber(x.amount),0);
+  const net = revenue-expenses-staff;
+  return {revenue,expenses,staff,net,expectedIncome,expectedCosts,projectedNet:net+expectedIncome-expectedCosts};
 }
 
-function companyFilterControls(month,sector,prefix){
+function companyForecastView(totals){
+  return `
+    <h2 class="finance-section-title">Previstos e pendentes</h2>
+    <div class="company-kpis finance-forecast">
+      <div class="card company-money-kpi"><span>Entradas previstas</span><strong>${brl(totals.expectedIncome)}</strong><small>A receber</small></div>
+      <div class="card company-money-kpi"><span>Gastos previstos</span><strong>${brl(totals.expectedCosts)}</strong><small>Saídas e staff a pagar</small></div>
+      <div class="card company-money-kpi net"><span>Saldo projetado</span><strong class="${totals.projectedNet<0?'negative-balance':''}">${brl(totals.projectedNet)}</strong><small>Saldo realizado + entradas previstas − gastos previstos</small></div>
+    </div>`;
+}
+
+function companyFilterControls(month,sector,prefix,year){
   const options = [{value:'Todos',label:'Todos os setores'}]
     .concat(COMPANY_SECTORS.map(x=>({value:x,label:x})));
+  const years = [...new Set([year,String(new Date().getFullYear()),...state.financialEntries.map(x=>String(x.entry_date||'').slice(0,4)),...state.companyEvents.map(x=>String(x.event_date||'').slice(0,4))])].filter(x=>/^\d{4}$/.test(x)).sort().reverse();
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const selectedMonth = month === 'Todos' ? 'Todos' : String(month||'').slice(-2);
 
   return `
     <div class="company-filters">
       <div class="field compact-field">
+        <label>Ano</label>
+        <select class="input" id="${prefix}-year">${years.map(y=>`<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('')}</select>
+      </div>
+      <div class="field compact-field">
         <label>Mês</label>
-        <input class="input" id="${prefix}-month" type="month" value="${esc(month)}">
+        <select class="input" id="${prefix}-month"><option value="Todos" ${selectedMonth==='Todos'?'selected':''}>Todos os meses</option>${months.map((name,i)=>{const value=String(i+1).padStart(2,'0');return `<option value="${value}" ${selectedMonth===value?'selected':''}>${name}</option>`}).join('')}</select>
       </div>
       <div class="field compact-field">
         <label>Setor</label>
@@ -202,11 +233,11 @@ function companyFilterControls(month,sector,prefix){
 }
 
 function companyDashboardView(){
-  const entries = filteredCompanyFinance(state.dashboardMonth,state.dashboardSector);
+  const entries = filteredCompanyFinance(state.dashboardMonth,state.dashboardSector,state.dashboardYear);
   const totals = companyFinanceTotals(entries);
   const events = state.companyEvents.filter(e =>
     sectorMatches(e,state.dashboardSector) &&
-    (!state.dashboardMonth || monthKeyFromDate(e.event_date) === state.dashboardMonth)
+    companyPeriodMatches(e.event_date,state.dashboardMonth,state.dashboardYear)
   );
   const counts = CRM_STATUSES.map(status=>({
     status,
@@ -222,7 +253,7 @@ function companyDashboardView(){
         </div>
       </div>
 
-      ${companyFilterControls(state.dashboardMonth,state.dashboardSector,'dashboard')}
+      ${companyFilterControls(state.dashboardMonth,state.dashboardSector,'dashboard',state.dashboardYear)}
 
       <div class="company-kpis">
         <div class="card company-money-kpi">
@@ -246,6 +277,8 @@ function companyDashboardView(){
           <small>Faturamento − despesas − staff</small>
         </div>
       </div>
+
+      ${companyForecastView(totals)}
 
       <div class="grid grid-2">
         <div class="card card-pad">
@@ -630,7 +663,7 @@ function companyCalendarView(){
 }
 
 function companyFinanceView(){
-  const entries = filteredCompanyFinance(state.financeMonth,state.financeSector);
+  const entries = filteredCompanyFinance(state.financeMonth,state.financeSector,state.financeYear);
   const totals = companyFinanceTotals(entries);
   const sorted = [...entries].sort((a,b)=>String(b.entry_date).localeCompare(String(a.entry_date)));
 
@@ -644,15 +677,16 @@ function companyFinanceView(){
         <button class="btn-primary" id="new-financial-entry">+ Novo lançamento</button>
       </div>
 
-      ${companyFilterControls(state.financeMonth,state.financeSector,'finance')}
+      ${companyFilterControls(state.financeMonth,state.financeSector,'finance',state.financeYear)}
 
+      <h2 class="finance-section-title">Realizado</h2>
       <div class="company-kpis">
         <div class="card company-money-kpi">
           <span>Faturamento total</span>
           <strong>${brl(totals.revenue)}</strong>
         </div>
         <div class="card company-money-kpi">
-          <span>Despesas mensais</span>
+          <span>Despesas pagas</span>
           <strong>${brl(totals.expenses)}</strong>
         </div>
         <div class="card company-money-kpi">
@@ -660,10 +694,12 @@ function companyFinanceView(){
           <strong>${brl(totals.staff)}</strong>
         </div>
         <div class="card company-money-kpi net">
-          <span>Valor líquido</span>
-          <strong>${brl(totals.net)}</strong>
+          <span>Saldo realizado</span>
+          <strong class="${totals.net<0?'negative-balance':''}">${brl(totals.net)}</strong>
         </div>
       </div>
+
+      ${companyForecastView(totals)}
 
       <div class="card list-card">
         ${
@@ -1189,6 +1225,12 @@ bindView = function(r){
     render();
   };
 
+  const dashYear = document.getElementById('dashboard-year');
+  if(dashYear) dashYear.onchange = ()=>{
+    state.dashboardYear = dashYear.value;
+    render();
+  };
+
   const dashSector = document.getElementById('dashboard-sector');
   if(dashSector) dashSector.onchange = ()=>{
     state.dashboardSector = dashSector.value;
@@ -1198,6 +1240,12 @@ bindView = function(r){
   const finMonth = document.getElementById('finance-month');
   if(finMonth) finMonth.onchange = ()=>{
     state.financeMonth = finMonth.value;
+    render();
+  };
+
+  const finYear = document.getElementById('finance-year');
+  if(finYear) finYear.onchange = ()=>{
+    state.financeYear = finYear.value;
     render();
   };
 
